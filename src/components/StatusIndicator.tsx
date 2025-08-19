@@ -1,60 +1,67 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 
 interface StatusIndicatorProps {
-  isAuthenticated: boolean;
   keyExpiryTime: Date | null;
   isDarkMode: boolean;
+  name?: string; // Added optional name prop
 }
 
 const StatusIndicator: React.FC<StatusIndicatorProps> = ({
-  isAuthenticated,
   keyExpiryTime,
   isDarkMode,
+  name,
 }) => {
+  const [currentTime, setCurrentTime] = useState(new Date());
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, []);
+
   const getStatusText = () => {
-    if (!isAuthenticated) {
-      return 'Not authenticated';
-    }
-
     if (!keyExpiryTime) {
-      return 'Authenticated (no expiry info)';
+      return '';
     }
+    const timeUntilExpiry = keyExpiryTime.getTime() - currentTime.getTime();
 
-    const now = new Date();
-    const timeUntilExpiry = keyExpiryTime.getTime() - now.getTime();
-    
     if (timeUntilExpiry <= 0) {
-      return 'Keys expired';
+      return ' expired';
     }
 
     const hoursUntilExpiry = Math.floor(timeUntilExpiry / (1000 * 60 * 60));
-    const minutesUntilExpiry = Math.floor((timeUntilExpiry % (1000 * 60 * 60)) / (1000 * 60));
+    const minutesUntilExpiry = Math.floor(
+      (timeUntilExpiry % (1000 * 60 * 60)) / (1000 * 60),
+    );
+    const secondsUntilExpiry = Math.floor(
+      (timeUntilExpiry % (1000 * 60)) / 1000,
+    );
 
     if (hoursUntilExpiry > 0) {
-      return `Authenticated (expires in ${hoursUntilExpiry}h ${minutesUntilExpiry}m)`;
+      return ` expires in ${hoursUntilExpiry}h ${minutesUntilExpiry}m ${secondsUntilExpiry}s`;
+    } else if (minutesUntilExpiry > 0) {
+      return ` expires in ${minutesUntilExpiry}m ${secondsUntilExpiry}s`;
     } else {
-      return `Authenticated (expires in ${minutesUntilExpiry}m)`;
+      return ` expires in ${secondsUntilExpiry}s`;
     }
   };
 
   const getStatusColor = () => {
-    if (!isAuthenticated) {
-      return '#FF3B30'; // Red
-    }
-
     if (!keyExpiryTime) {
       return '#FF9500'; // Orange
     }
 
-    const now = new Date();
-    const timeUntilExpiry = keyExpiryTime.getTime() - now.getTime();
-    
+    const timeUntilExpiry = keyExpiryTime.getTime() - currentTime.getTime();
+
     if (timeUntilExpiry <= 0) {
       return '#FF3B30'; // Red
     }
 
-    if (timeUntilExpiry <= 3600000) { // Less than 1 hour
+    if (timeUntilExpiry <= 3600000) {
+      // Less than 1 hour
       return '#FF9500'; // Orange
     }
 
@@ -66,9 +73,16 @@ const StatusIndicator: React.FC<StatusIndicatorProps> = ({
   return (
     <View style={styles.container}>
       <View style={[styles.indicator, { backgroundColor: getStatusColor() }]} />
-      <Text style={[styles.statusText, { color: textColor }]}>
-        {getStatusText()}
-      </Text>
+      <View style={{ flex: 1 }}>
+        {name && (
+          <Text style={[styles.nameText, { color: textColor }]}>{name}</Text>
+        )}
+      </View>
+      <View>
+        <Text style={[styles.statusText, { color: textColor }]}>
+          {getStatusText()}
+        </Text>
+      </View>
     </View>
   );
 };
@@ -79,7 +93,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 20,
     paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingVertical: 0,
     borderRadius: 8,
     backgroundColor: 'rgba(0, 0, 0, 0.05)',
   },
@@ -88,6 +102,11 @@ const styles = StyleSheet.create({
     height: 12,
     borderRadius: 6,
     marginRight: 10,
+  },
+  nameText: {
+    fontSize: 13,
+    fontWeight: 'bold',
+    marginBottom: 2,
   },
   statusText: {
     fontSize: 14,

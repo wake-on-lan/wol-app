@@ -20,7 +20,6 @@ export const STORAGE_KEYS = {
   PRIVATE_KEY: 'wol_app_private_key',
   SERVER_PUBLIC_KEY: 'wol_app_server_public_key',
   JWT_TOKEN: 'wol_app_jwt_token',
-  KEY_EXPIRY: 'wol_app_key_expiry',
 } as const;
 
 // Validation Patterns

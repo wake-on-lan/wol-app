@@ -8,7 +8,6 @@ export interface KeyPair {
 }
 
 export class KeystoreService {
-
   static async generateKeyPair(): Promise<KeyPair> {
     try {
       const keyPair = QuickCrypto.generateKeyPairSync('rsa', {
@@ -22,17 +21,13 @@ export class KeystoreService {
       const privateKey = keyPair.privateKey as any as string;
 
       const expiryTime = new Date();
-      expiryTime.setHours(expiryTime.getHours() + SECURITY_CONFIG.KEY_EXPIRY_HOURS);
+      expiryTime.setHours(
+        expiryTime.getHours() + SECURITY_CONFIG.KEY_EXPIRY_HOURS,
+      );
       await Keychain.setInternetCredentials(
         STORAGE_KEYS.PRIVATE_KEY,
         'private_key',
         privateKey as any as string,
-      );
-
-      await Keychain.setInternetCredentials(
-        STORAGE_KEYS.KEY_EXPIRY,
-        'expiry',
-        expiryTime.toISOString(),
       );
 
       return {
@@ -112,34 +107,6 @@ export class KeystoreService {
     }
   }
 
-  static async getKeyExpiryTime(): Promise<Date | null> {
-    try {
-      const credentials = await Keychain.getInternetCredentials(
-        STORAGE_KEYS.KEY_EXPIRY,
-      );
-      if (!credentials) {
-        return null;
-      }
-      return new Date(credentials.password);
-    } catch (error) {
-      console.error('Failed to retrieve key expiry time:', error);
-      return null;
-    }
-  }
-
-  static async isKeyExpired(): Promise<boolean> {
-    try {
-      const expiryTime = await this.getKeyExpiryTime();
-      if (!expiryTime) {
-        return true;
-      }
-      return new Date() > expiryTime;
-    } catch (error) {
-      console.error('Failed to check key expiry:', error);
-      return true;
-    }
-  }
-
   static async clearAllKeys(): Promise<void> {
     const clearKey = async (alias: string) => {
       try {
@@ -154,7 +121,6 @@ export class KeystoreService {
     try {
       await Promise.all([
         clearKey(STORAGE_KEYS.PRIVATE_KEY),
-        clearKey(STORAGE_KEYS.KEY_EXPIRY),
         clearKey(STORAGE_KEYS.SERVER_PUBLIC_KEY),
         clearKey(STORAGE_KEYS.JWT_TOKEN),
       ]);
@@ -163,32 +129,14 @@ export class KeystoreService {
     }
   }
 
-  static async hasAnyKeys(): Promise<boolean> {
+  static async hasKeysStored(): Promise<boolean> {
     try {
-      const [privateKey, jwtToken, serverKey, expiryTime] =
-        await Promise.all([
-          this.getPrivateKey(),
-          this.getJwtToken(),
-          this.getServerPublicKey(),
-          this.getKeyExpiryTime(),
-        ]);
-
-      return !!(privateKey || jwtToken || serverKey || expiryTime);
-    } catch (error) {
-      console.error('Failed to check if keys exist:', error);
-      return false;
-    }
-  }
-
-  static async hasValidKeys(): Promise<boolean> {
-    try {
-      const [privateKey, jwtToken, isExpired] = await Promise.all([
+      const [privateKey, jwtToken] = await Promise.all([
         this.getPrivateKey(),
         this.getJwtToken(),
-        this.isKeyExpired(),
       ]);
 
-      return !!(privateKey && jwtToken && !isExpired);
+      return !!(privateKey && jwtToken);
     } catch (error) {
       console.error('Failed to check key validity:', error);
       return false;

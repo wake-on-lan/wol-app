@@ -8,10 +8,7 @@ import {
   useColorScheme,
   TouchableOpacity,
 } from 'react-native';
-import {
-  SafeAreaProvider,
-  SafeAreaView,
-} from 'react-native-safe-area-context';
+import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 
 import LoginForm from 'src/components/LoginForm';
 import DeviceDropdown from 'src/components/DeviceDropdown';
@@ -22,7 +19,13 @@ import { ERROR_MESSAGES } from 'src/utils/constants';
 
 function App(): React.JSX.Element {
   const isDarkMode = useColorScheme() === 'dark';
-  const { isAuthenticated, login, logout, keyExpiryTime } = useAuth();
+  const {
+    isAuthenticated,
+    login,
+    logout,
+    serverPublicKeyExpiryTime,
+    jwtTokenExpiryTime,
+  } = useAuth();
   const [devices, setDevices] = useState<Device[]>([]);
   const [selectedDevice, setSelectedDevice] = useState<Device | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -59,7 +62,10 @@ function App(): React.JSX.Element {
     try {
       await login(username, password);
     } catch (error) {
-      Alert.alert('Login Failed', 'Please check your credentials and try again.');
+      Alert.alert(
+        'Login Failed',
+        'Please check your credentials and try again.',
+      );
     } finally {
       setIsLoading(false);
     }
@@ -67,27 +73,40 @@ function App(): React.JSX.Element {
 
   const handleWakeDevice = async () => {
     if (!selectedDevice) {
-      Alert.alert(ERROR_MESSAGES.NO_DEVICE_SELECTED, 'Please select a device to wake.');
+      Alert.alert(
+        ERROR_MESSAGES.NO_DEVICE_SELECTED,
+        'Please select a device to wake.',
+      );
       return;
     }
 
     setIsLoading(true);
     try {
       const result = await ApiService.wakeOnLan(selectedDevice.mac);
-      
+
       if (result.success) {
-        Alert.alert('Success', result.message || `Wake-on-LAN signal sent to ${selectedDevice.name}`);
+        Alert.alert(
+          'Success',
+          result.message || `Wake-on-LAN signal sent to ${selectedDevice.name}`,
+        );
       } else {
-        Alert.alert('Warning', result.error || result.message || 'Wake-on-LAN signal sent but status unknown');
+        Alert.alert(
+          'Warning',
+          result.error ||
+            result.message ||
+            'Wake-on-LAN signal sent but status unknown',
+        );
       }
     } catch (error) {
       console.error('Wake-on-LAN failed:', error);
-      Alert.alert('Error', 'Failed to send Wake-on-LAN signal. Please try again.');
+      Alert.alert(
+        'Error',
+        'Failed to send Wake-on-LAN signal. Please try again.',
+      );
     } finally {
       setIsLoading(false);
     }
   };
-
   return (
     <SafeAreaProvider>
       <StatusBar
@@ -102,12 +121,20 @@ function App(): React.JSX.Element {
         </View>
 
         <View style={styles.content}>
-          <StatusIndicator
-            isAuthenticated={isAuthenticated}
-            keyExpiryTime={keyExpiryTime}
-            isDarkMode={isDarkMode}
-          />
-
+          {isAuthenticated && (
+            <>
+              <StatusIndicator
+                keyExpiryTime={jwtTokenExpiryTime}
+                name="Authentication"
+                isDarkMode={isDarkMode}
+              />
+              <StatusIndicator
+                keyExpiryTime={serverPublicKeyExpiryTime}
+                name="Server Public Key"
+                isDarkMode={isDarkMode}
+              />
+            </>
+          )}
           {!isAuthenticated ? (
             <LoginForm
               onLogin={handleLogin}
@@ -125,10 +152,7 @@ function App(): React.JSX.Element {
 
               <View style={styles.buttonContainer}>
                 <TouchableOpacity
-                  style={[
-                    styles.button,
-                    styles.refreshButton,
-                  ]}
+                  style={[styles.button, styles.refreshButton]}
                   onPress={loadDevices}
                   disabled={isLoading}
                 >

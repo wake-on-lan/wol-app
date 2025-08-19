@@ -234,20 +234,4 @@ export class ApiService {
       throw error;
     }
   }
-
-  // Check if we need to re-authenticate
-  static async needsReauth(): Promise<boolean> {
-    const hasValidKeys = await KeystoreService.hasValidKeys();
-    if (!hasValidKeys) {
-      return true;
-    }
-
-    try {
-      // Try to make an authenticated request to verify token is still valid
-      await this.getMyKey();
-      return false;
-    } catch (error) {
-      return true;
-    }
-  }
 }
