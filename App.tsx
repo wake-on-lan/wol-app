@@ -116,11 +116,8 @@ function App(): React.JSX.Element {
       <SafeAreaView style={[styles.container, backgroundStyle]}>
         <View style={styles.header}>
           <Text style={[styles.title, { color: isDarkMode ? '#fff' : '#000' }]}>
-            WOL Manager
+            Wake on LAN
           </Text>
-        </View>
-
-        <View style={styles.content}>
           {isAuthenticated && (
             <>
               <StatusIndicator
@@ -135,6 +132,9 @@ function App(): React.JSX.Element {
               />
             </>
           )}
+        </View>
+
+        <View style={styles.content}>
           {!isAuthenticated ? (
             <LoginForm
               onLogin={handleLogin}

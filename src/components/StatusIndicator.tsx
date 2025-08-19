@@ -39,13 +39,14 @@ const StatusIndicator: React.FC<StatusIndicatorProps> = ({
     const secondsUntilExpiry = Math.floor(
       (timeUntilExpiry % (1000 * 60)) / 1000,
     );
+    const paddedSeconds = secondsUntilExpiry.toString().padStart(2, '0');
 
     if (hoursUntilExpiry > 0) {
-      return ` expires in ${hoursUntilExpiry}h ${minutesUntilExpiry}m ${secondsUntilExpiry}s`;
+      return ` expires in ${hoursUntilExpiry}h ${minutesUntilExpiry}m ${paddedSeconds}s`;
     } else if (minutesUntilExpiry > 0) {
-      return ` expires in ${minutesUntilExpiry}m ${secondsUntilExpiry}s`;
+      return ` expires in ${minutesUntilExpiry}m ${paddedSeconds}s`;
     } else {
-      return ` expires in ${secondsUntilExpiry}s`;
+      return ` expires in ${paddedSeconds}s`;
     }
   };
 
@@ -91,7 +92,7 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: 0,
     paddingHorizontal: 16,
     paddingVertical: 0,
     borderRadius: 8,
