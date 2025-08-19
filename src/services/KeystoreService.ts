@@ -23,7 +23,7 @@ export class KeystoreService {
       await Keychain.setInternetCredentials(
         STORAGE_KEYS.PRIVATE_KEY,
         'private_key',
-        privateKey
+        privateKey,
       );
 
       return {

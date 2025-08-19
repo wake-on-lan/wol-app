@@ -66,16 +66,14 @@ export class CryptoService {
   ): Promise<any> {
     try {
       const { data, key, iv } = encryptedMessage;
-
       const aesKeyBuffer = this.rsaDecrypt(key, clientPrivateKey);
-      const ivBuffer = this.rsaDecrypt(iv, clientPrivateKey);
 
+      const ivBuffer = this.rsaDecrypt(iv, clientPrivateKey);
       const decipher = QuickCrypto.createDecipheriv(
         SECURITY_CONFIG.AES_ALGORITHM,
         aesKeyBuffer,
         ivBuffer,
       );
-
       let decrypted = decipher.update(data, 'base64', 'utf-8') as any as string;
       decrypted += decipher.final('utf-8');
 

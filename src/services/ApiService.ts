@@ -95,7 +95,7 @@ export class ApiService {
       throw new Error('No authentication token found');
     }
 
-    return this.makeRequest(endpoint, {
+    return await this.makeRequest(endpoint, {
       ...options,
       headers: {
         Authorization: `Bearer ${token}`,
@@ -109,16 +109,13 @@ export class ApiService {
     payload?: any,
     method: string = 'POST',
   ): Promise<any> {
-    const [serverPublicKey, clientPrivateKey] = await Promise.all([
-      KeystoreService.getServerPublicKey(),
-      KeystoreService.getPrivateKey(),
-    ]);
-
-    if (!serverPublicKey || !clientPrivateKey) {
+    const clientPrivateKey = await KeystoreService.getPrivateKey();
+    if (!clientPrivateKey) {
       throw new Error('Missing encryption keys');
     }
-
     let encryptedPayload: EncryptedMessage | undefined;
+    const serverPublicKey =
+      payload && (await KeystoreService.getServerPublicKey());
     if (payload) {
       encryptedPayload = await CryptoService.encryptForServer(
         payload,
@@ -129,9 +126,11 @@ export class ApiService {
       method,
       body: encryptedPayload ? JSON.stringify(encryptedPayload) : undefined,
     });
-
-    const encryptedResponse = await response.json() as EncryptedMessage;
-    return await CryptoService.decryptFromServer(encryptedResponse, clientPrivateKey);
+    const encryptedResponse = (await response.json()) as EncryptedMessage;
+    return await CryptoService.decryptFromServer(
+      encryptedResponse,
+      clientPrivateKey,
+    );
   }
 
   // Authentication
@@ -141,7 +140,7 @@ export class ApiService {
       body: JSON.stringify(credentials),
     });
 
-    const result = await response.json() as LoginResponse;
+    const result = (await response.json()) as LoginResponse;
     // Store JWT token
     await KeystoreService.storeJwtToken(result.access_token);
 
@@ -151,7 +150,7 @@ export class ApiService {
   // Key Management
   static async getServerPublicKey(): Promise<ServerPublicKeyResponse> {
     const response = await this.makeAuthenticatedRequest('/keys/server-public');
-    const result = await response.json() as ServerPublicKeyResponse;
+    const result = (await response.json()) as ServerPublicKeyResponse;
 
     // Store server public key for encryption
     await KeystoreService.storeServerPublicKey(result.publicKey);
@@ -168,7 +167,7 @@ export class ApiService {
       body: JSON.stringify(payload),
     });
 
-    return await response.json() as RegisterKeyResponse;
+    return (await response.json()) as RegisterKeyResponse;
   }
 
   static async getMyKey(): Promise<RegisterKeyResponse | null> {
@@ -177,7 +176,7 @@ export class ApiService {
 
   // Device Management
   static async scanDevices(): Promise<Device[]> {
-    return this.makeEncryptedRequest(
+    return await this.makeEncryptedRequest(
       '/commands/scan-devices',
       undefined,
       'GET',

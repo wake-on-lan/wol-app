@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Alert, ActivityIndicator } from 'react-native';
 import DeviceDropdown from './DeviceDropdown';
 import { ApiService, Device } from '../services/ApiService';
@@ -12,10 +12,6 @@ const WakeOnLanView: React.FC<WakeOnLanViewProps> = ({ isDarkMode }) => {
   const [devices, setDevices] = useState<Device[]>([]);
   const [selectedDevice, setSelectedDevice] = useState<Device | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-
-  useEffect(() => {
-    loadDevices();
-  }, []);
 
   const loadDevices = async () => {
     try {

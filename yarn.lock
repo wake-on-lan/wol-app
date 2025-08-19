@@ -2141,16 +2141,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@react-native-picker/picker@npm:^2.11.1":
-  version: 2.11.1
-  resolution: "@react-native-picker/picker@npm:2.11.1"
-  peerDependencies:
-    react: "*"
-    react-native: "*"
-  checksum: b662be771b89ed34704a5753f54fc11a2e65e11de14624756898c344291ecc43d1b1a2dae05190ad997eb461bb66a55e71239dc60608c5f88a246804536778b9
-  languageName: node
-  linkType: hard
-
 "@react-native/assets-registry@npm:0.81.0":
   version: 0.81.0
   resolution: "@react-native/assets-registry@npm:0.81.0"
@@ -6475,20 +6465,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"lodash.isequal@npm:^4.5.0":
-  version: 4.5.0
-  resolution: "lodash.isequal@npm:4.5.0"
-  checksum: da27515dc5230eb1140ba65ff8de3613649620e8656b19a6270afe4866b7bd461d9ba2ac8a48dcc57f7adac4ee80e1de9f965d89d4d81a0ad52bb3eec2609644
-  languageName: node
-  linkType: hard
-
-"lodash.isobject@npm:^3.0.2":
-  version: 3.0.2
-  resolution: "lodash.isobject@npm:3.0.2"
-  checksum: 6c1667cbc4494d0a13a3617a4b23278d6d02dac520311f2bbb43f16f2cf71d2e6eb9dec8057315b77459df4890c756a256a087d3f4baa44a79ab5d6c968b060e
-  languageName: node
-  linkType: hard
-
 "lodash.merge@npm:^4.6.2":
   version: 4.6.2
   resolution: "lodash.merge@npm:4.6.2"
@@ -7750,18 +7726,6 @@ __metadata:
   version: 10.0.0
   resolution: "react-native-keychain@npm:10.0.0"
   checksum: 1055cc192df58cb110bd49df1264a401007a354ad28b93adefd740aeac0f746cdab86d7428887694a1b0949ef8d0dc85db8984e77db684d7b967180167b64d42
-  languageName: node
-  linkType: hard
-
-"react-native-picker-select@npm:^9.3.1":
-  version: 9.3.1
-  resolution: "react-native-picker-select@npm:9.3.1"
-  dependencies:
-    lodash.isequal: ^4.5.0
-    lodash.isobject: ^3.0.2
-  peerDependencies:
-    "@react-native-picker/picker": ^2.4.0
-  checksum: ba03c79bff736f225f6cf06a971a5058739ef27c26d2f66edf31e80250fc40be29085d4b15a35339c31b4d4830d362594f8d5933a25a0f2f1f9d702189e2d611
   languageName: node
   linkType: hard
 
@@ -9159,7 +9123,6 @@ __metadata:
     "@react-native-community/cli": 20.0.0
     "@react-native-community/cli-platform-android": 20.0.0
     "@react-native-community/netinfo": ^11.4.1
-    "@react-native-picker/picker": ^2.11.1
     "@react-native/babel-preset": 0.81.0
     "@react-native/eslint-config": 0.81.0
     "@react-native/metro-config": 0.81.0
@@ -9177,7 +9140,6 @@ __metadata:
     react: 19.1.0
     react-native: 0.81.0
     react-native-keychain: ^10.0.0
-    react-native-picker-select: ^9.3.1
     react-native-quick-base64: ^2.2.1
     react-native-quick-crypto: ^0.7.17
     react-native-rsa-native: ^2.0.5
