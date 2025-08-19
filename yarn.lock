@@ -2132,15 +2132,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@react-native-community/netinfo@npm:^11.4.1":
-  version: 11.4.1
-  resolution: "@react-native-community/netinfo@npm:11.4.1"
-  peerDependencies:
-    react-native: ">=0.59"
-  checksum: d347ae522da6b8c045d6378754d4928bdf23cc85b74571b91fa8a03fa168bdac5e3c65eb97eac0dd0c7cbd20e782f99d41b090fb79ce7d815cbaf6fb5d1abe37
-  languageName: node
-  linkType: hard
-
 "@react-native/assets-registry@npm:0.81.0":
   version: 0.81.0
   resolution: "@react-native/assets-registry@npm:0.81.0"
@@ -2342,20 +2333,6 @@ __metadata:
     metro-config: ^0.83.1
     metro-runtime: ^0.83.1
   checksum: 0354b9a379b970a22ff7c30fb9e51f8504a7f4e1ca0d456e9ce40b1b666c68b7291becffe4839b3aeb84b2aeedfe84948409fccf2e6202555a19de48ea5653d9
-  languageName: node
-  linkType: hard
-
-"@react-native/new-app-screen@npm:0.81.0":
-  version: 0.81.0
-  resolution: "@react-native/new-app-screen@npm:0.81.0"
-  peerDependencies:
-    "@types/react": ^19.1.0
-    react: "*"
-    react-native: "*"
-  peerDependenciesMeta:
-    "@types/react":
-      optional: true
-  checksum: ad111ffdd4bda5974388de3dbfeb38bc77d17af43c6643f576ce2e3844f7468cedb1af1dc9bbf9cd6d77af75194e647d1ca562cb811bf59b646a1a60dfa0aca6
   languageName: node
   linkType: hard
 
@@ -7752,13 +7729,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-native-rsa-native@npm:^2.0.5":
-  version: 2.0.5
-  resolution: "react-native-rsa-native@npm:2.0.5"
-  checksum: 7a720ab3ef1898a4f365decc2913139dbfb090901806bf4c20932c1511bde32cd02586725142e9c273bb575c907a5ee87a84edc8c0b01cce252ad80436370740
-  languageName: node
-  linkType: hard
-
 "react-native-safe-area-context@npm:^5.5.2":
   version: 5.6.0
   resolution: "react-native-safe-area-context@npm:5.6.0"
@@ -9122,11 +9092,9 @@ __metadata:
     "@react-native-async-storage/async-storage": ^2.2.0
     "@react-native-community/cli": 20.0.0
     "@react-native-community/cli-platform-android": 20.0.0
-    "@react-native-community/netinfo": ^11.4.1
     "@react-native/babel-preset": 0.81.0
     "@react-native/eslint-config": 0.81.0
     "@react-native/metro-config": 0.81.0
-    "@react-native/new-app-screen": 0.81.0
     "@react-native/typescript-config": 0.81.0
     "@types/jest": ^29.5.13
     "@types/react": ^19.1.0
@@ -9142,7 +9110,6 @@ __metadata:
     react-native-keychain: ^10.0.0
     react-native-quick-base64: ^2.2.1
     react-native-quick-crypto: ^0.7.17
-    react-native-rsa-native: ^2.0.5
     react-native-safe-area-context: ^5.5.2
     react-native-vector-icons: ^10.3.0
     react-test-renderer: 19.1.0
