@@ -1,5 +1,6 @@
 import QuickCrypto from 'react-native-quick-crypto';
 import { Buffer } from '@craftzdog/react-native-buffer';
+import { SECURITY_CONFIG } from '../utils/constants';
 
 export interface EncryptedMessage {
   data: string; // Base64-encoded AES-encrypted JSON
@@ -13,8 +14,8 @@ export class CryptoService {
     return QuickCrypto.publicEncrypt(
       {
         key: publicKeyPem,
-        padding: QuickCrypto.constants.RSA_PKCS1_OAEP_PADDING,
-        oaepHash: 'sha256',
+        padding: SECURITY_CONFIG.RSA_PADDING,
+        oaepHash: SECURITY_CONFIG.RSA_OAEP_HASH,
       },
       buffer,
     ).toString('base64');
@@ -27,8 +28,8 @@ export class CryptoService {
     const decrypted = QuickCrypto.privateDecrypt(
       {
         key: privateKeyPem,
-        padding: QuickCrypto.constants.RSA_PKCS1_OAEP_PADDING,
-        oaepHash: 'sha256',
+        padding: SECURITY_CONFIG.RSA_PADDING,
+        oaepHash: SECURITY_CONFIG.RSA_OAEP_HASH,
       },
       Buffer.from(encryptedData, 'base64'),
     );
@@ -45,11 +46,7 @@ export class CryptoService {
       const aesKey = QuickCrypto.randomBytes(32);
       const iv = QuickCrypto.randomBytes(16);
 
-      // Convert payload to JSON string
-      const jsonPayload = JSON.stringify(payload);
-
-      // Encrypt payload with AES-256-CBC
-      const cipher = QuickCrypto.createCipheriv('aes-256-cbc', aesKey, iv);
+      const cipher = QuickCrypto.createCipheriv(SECURITY_CONFIG.AES_ALGORITHM, aesKey, iv);
       let encrypted = cipher.update(json, 'utf-8', 'base64') as any as string;
       encrypted += cipher.final('base64');
 
@@ -74,7 +71,7 @@ export class CryptoService {
       const ivBuffer = this.rsaDecrypt(iv, clientPrivateKey);
 
       const decipher = QuickCrypto.createDecipheriv(
-        'aes-256-cbc',
+        SECURITY_CONFIG.AES_ALGORITHM,
         aesKeyBuffer,
         ivBuffer,
       );
@@ -100,23 +97,5 @@ export class CryptoService {
 
       throw new Error(`Failed to decrypt message: ${error}`);
     }
-  }
-
-  static isValidPemFormat(key: string): boolean {
-    const publicKeyRegex =
-      /^-----BEGIN PUBLIC KEY-----[\s\S]*-----END PUBLIC KEY-----$/;
-    const privateKeyRegex =
-      /^-----BEGIN PRIVATE KEY-----[\s\S]*-----END PRIVATE KEY-----$/;
-
-    return publicKeyRegex.test(key.trim()) || privateKeyRegex.test(key.trim());
-  }
-
-  static extractPublicKeyFromPrivate(privateKeyPem: string): string {
-    // Note: react-native-rsa-native should provide this functionality
-    // This is a placeholder - you might need to use a different method
-    // depending on the actual library implementation
-    throw new Error(
-      'Public key extraction not implemented - generate key pair instead',
-    );
   }
 }

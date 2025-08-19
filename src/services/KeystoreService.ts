@@ -1,5 +1,6 @@
 import * as Keychain from 'react-native-keychain';
 import QuickCrypto from 'react-native-quick-crypto';
+import { SECURITY_CONFIG, STORAGE_KEYS } from '../utils/constants';
 
 export interface KeyPair {
   publicKey: string;
@@ -7,36 +8,29 @@ export interface KeyPair {
 }
 
 export class KeystoreService {
-  private static readonly PRIVATE_KEY_ALIAS = 'wol_app_private_key';
-  private static readonly PUBLIC_KEY_ALIAS = 'wol_app_public_key';
-  private static readonly KEY_EXPIRY_ALIAS = 'wol_app_key_expiry';
-  private static readonly SERVER_PUBLIC_KEY_ALIAS = 'wol_app_server_public_key';
-  private static readonly JWT_TOKEN_ALIAS = 'wol_app_jwt_token';
 
   static async generateKeyPair(): Promise<KeyPair> {
     try {
       const keyPair = QuickCrypto.generateKeyPairSync('rsa', {
-        modulusLength: 2048,
+        modulusLength: SECURITY_CONFIG.RSA_KEY_SIZE,
         publicKeyEncoding: { type: 'spki', format: 'pem' },
         privateKeyEncoding: { type: 'pkcs8', format: 'pem' },
       });
+
       const publicKey = keyPair.publicKey as any as string;
+
       const privateKey = keyPair.privateKey as any as string;
+
       const expiryTime = new Date();
-      expiryTime.setHours(expiryTime.getHours() + 24);
+      expiryTime.setHours(expiryTime.getHours() + SECURITY_CONFIG.KEY_EXPIRY_HOURS);
       await Keychain.setInternetCredentials(
-        this.PRIVATE_KEY_ALIAS,
+        STORAGE_KEYS.PRIVATE_KEY,
         'private_key',
         privateKey as any as string,
       );
-      await Keychain.setInternetCredentials(
-        this.PUBLIC_KEY_ALIAS,
-        'public_key',
-        publicKey as any as string,
-      );
 
       await Keychain.setInternetCredentials(
-        this.KEY_EXPIRY_ALIAS,
+        STORAGE_KEYS.KEY_EXPIRY,
         'expiry',
         expiryTime.toISOString(),
       );
@@ -53,7 +47,7 @@ export class KeystoreService {
   static async getPrivateKey(): Promise<string | null> {
     try {
       const credentials = await Keychain.getInternetCredentials(
-        this.PRIVATE_KEY_ALIAS,
+        STORAGE_KEYS.PRIVATE_KEY,
       );
       return credentials ? credentials.password : null;
     } catch (error) {
@@ -70,22 +64,10 @@ export class KeystoreService {
     }
   }
 
-  static async getPublicKey(): Promise<string | null> {
-    try {
-      const credentials = await Keychain.getInternetCredentials(
-        this.PUBLIC_KEY_ALIAS,
-      );
-      return credentials ? credentials.password : null;
-    } catch (error) {
-      console.error('Failed to retrieve public key:', error);
-      return null;
-    }
-  }
-
   static async storeServerPublicKey(serverPublicKey: string): Promise<void> {
     try {
       await Keychain.setInternetCredentials(
-        this.SERVER_PUBLIC_KEY_ALIAS,
+        STORAGE_KEYS.SERVER_PUBLIC_KEY,
         'server_public_key',
         serverPublicKey,
       );
@@ -97,7 +79,7 @@ export class KeystoreService {
   static async getServerPublicKey(): Promise<string | null> {
     try {
       const credentials = await Keychain.getInternetCredentials(
-        this.SERVER_PUBLIC_KEY_ALIAS,
+        STORAGE_KEYS.SERVER_PUBLIC_KEY,
       );
       return credentials ? credentials.password : null;
     } catch (error) {
@@ -109,7 +91,7 @@ export class KeystoreService {
   static async storeJwtToken(token: string): Promise<void> {
     try {
       await Keychain.setInternetCredentials(
-        this.JWT_TOKEN_ALIAS,
+        STORAGE_KEYS.JWT_TOKEN,
         'jwt_token',
         token,
       );
@@ -121,7 +103,7 @@ export class KeystoreService {
   static async getJwtToken(): Promise<string | null> {
     try {
       const credentials = await Keychain.getInternetCredentials(
-        this.JWT_TOKEN_ALIAS,
+        STORAGE_KEYS.JWT_TOKEN,
       );
       return credentials ? credentials.password : null;
     } catch (error) {
@@ -133,7 +115,7 @@ export class KeystoreService {
   static async getKeyExpiryTime(): Promise<Date | null> {
     try {
       const credentials = await Keychain.getInternetCredentials(
-        this.KEY_EXPIRY_ALIAS,
+        STORAGE_KEYS.KEY_EXPIRY,
       );
       if (!credentials) {
         return null;
@@ -171,11 +153,10 @@ export class KeystoreService {
 
     try {
       await Promise.all([
-        clearKey(this.PRIVATE_KEY_ALIAS),
-        clearKey(this.PUBLIC_KEY_ALIAS),
-        clearKey(this.KEY_EXPIRY_ALIAS),
-        clearKey(this.SERVER_PUBLIC_KEY_ALIAS),
-        clearKey(this.JWT_TOKEN_ALIAS),
+        clearKey(STORAGE_KEYS.PRIVATE_KEY),
+        clearKey(STORAGE_KEYS.KEY_EXPIRY),
+        clearKey(STORAGE_KEYS.SERVER_PUBLIC_KEY),
+        clearKey(STORAGE_KEYS.JWT_TOKEN),
       ]);
     } catch (error) {
       console.error('Failed to clear keys:', error);
@@ -184,16 +165,15 @@ export class KeystoreService {
 
   static async hasAnyKeys(): Promise<boolean> {
     try {
-      const [privateKey, publicKey, jwtToken, serverKey, expiryTime] =
+      const [privateKey, jwtToken, serverKey, expiryTime] =
         await Promise.all([
           this.getPrivateKey(),
-          this.getPublicKey(),
           this.getJwtToken(),
           this.getServerPublicKey(),
           this.getKeyExpiryTime(),
         ]);
 
-      return !!(privateKey || publicKey || jwtToken || serverKey || expiryTime);
+      return !!(privateKey || jwtToken || serverKey || expiryTime);
     } catch (error) {
       console.error('Failed to check if keys exist:', error);
       return false;
@@ -202,14 +182,13 @@ export class KeystoreService {
 
   static async hasValidKeys(): Promise<boolean> {
     try {
-      const [privateKey, publicKey, jwtToken, isExpired] = await Promise.all([
+      const [privateKey, jwtToken, isExpired] = await Promise.all([
         this.getPrivateKey(),
-        this.getPublicKey(),
         this.getJwtToken(),
         this.isKeyExpired(),
       ]);
 
-      return !!(privateKey && publicKey && jwtToken && !isExpired);
+      return !!(privateKey && jwtToken && !isExpired);
     } catch (error) {
       console.error('Failed to check key validity:', error);
       return false;

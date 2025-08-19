@@ -1,3 +1,5 @@
+import QuickCrypto from "react-native-quick-crypto";
+
 // API Configuration
 export const API_CONFIG = {
   BASE_URL: 'http://gandalf.lan:3000', // Update this to your backend URL
@@ -7,16 +9,15 @@ export const API_CONFIG = {
 // Security Configuration
 export const SECURITY_CONFIG = {
   RSA_KEY_SIZE: 2048,
-  AES_KEY_SIZE: 256,
-  IV_SIZE: 128,
   KEY_EXPIRY_HOURS: 24,
-  KEY_WARNING_HOURS: 1,
+  AES_ALGORITHM: 'aes-256-cbc',
+  RSA_PADDING: QuickCrypto.constants.RSA_PKCS1_OAEP_PADDING,
+  RSA_OAEP_HASH: 'sha256',
 };
 
 // Storage Keys
 export const STORAGE_KEYS = {
   PRIVATE_KEY: 'wol_app_private_key',
-  PUBLIC_KEY: 'wol_app_public_key',
   SERVER_PUBLIC_KEY: 'wol_app_server_public_key',
   JWT_TOKEN: 'wol_app_jwt_token',
   KEY_EXPIRY: 'wol_app_key_expiry',
@@ -39,11 +40,4 @@ export const ERROR_MESSAGES = {
   INVALID_MAC_ADDRESS: 'Invalid MAC address format.',
   NO_DEVICE_SELECTED: 'Please select a device first.',
   KEYS_EXPIRED: 'Encryption keys have expired. Please log in again.',
-} as const;
-
-// App Configuration
-export const APP_CONFIG = {
-  NAME: 'WOL Manager',
-  VERSION: '1.0.0',
-  COMPANY: 'Wake-on-LAN Solutions',
 } as const;
