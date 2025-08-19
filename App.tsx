@@ -9,13 +9,13 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
+import Icon from 'react-native-vector-icons/MaterialIcons';
 
 import LoginForm from 'src/components/LoginForm';
-import DeviceDropdown from 'src/components/DeviceDropdown';
 import StatusIndicator from 'src/components/StatusIndicator';
+import MainMenu, { MenuOption } from 'src/components/MainMenu';
+import WakeOnLanView from 'src/components/WakeOnLanView';
 import { useAuth } from 'src/hooks/useAuth';
-import { ApiService, Device } from 'src/services/ApiService';
-import { ERROR_MESSAGES } from 'src/utils/constants';
 
 function App(): React.JSX.Element {
   const isDarkMode = useColorScheme() === 'dark';
@@ -26,36 +26,19 @@ function App(): React.JSX.Element {
     serverPublicKeyExpiryTime,
     jwtTokenExpiryTime,
   } = useAuth();
-  const [devices, setDevices] = useState<Device[]>([]);
-  const [selectedDevice, setSelectedDevice] = useState<Device | null>(null);
+  const [currentView, setCurrentView] = useState<MenuOption | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
   const backgroundStyle = {
     backgroundColor: isDarkMode ? '#1a1a1a' : '#f5f5f5',
   };
 
-  // Load devices when authenticated
+  // Reset view when authentication changes
   useEffect(() => {
-    if (isAuthenticated) {
-      loadDevices();
-    } else {
-      setDevices([]);
-      setSelectedDevice(null);
+    if (!isAuthenticated) {
+      setCurrentView(null);
     }
   }, [isAuthenticated]);
-
-  const loadDevices = async () => {
-    try {
-      setIsLoading(true);
-      const deviceList = await ApiService.scanDevices();
-      setDevices(deviceList);
-    } catch (error) {
-      console.error('Failed to load devices:', error);
-      Alert.alert('Error', 'Failed to load devices. Please try again.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   const handleLogin = async (username: string, password: string) => {
     setIsLoading(true);
@@ -71,40 +54,87 @@ function App(): React.JSX.Element {
     }
   };
 
-  const handleWakeDevice = async () => {
-    if (!selectedDevice) {
-      Alert.alert(
-        ERROR_MESSAGES.NO_DEVICE_SELECTED,
-        'Please select a device to wake.',
-      );
-      return;
-    }
+  const handleMenuSelect = (option: MenuOption) => {
+    setCurrentView(option);
+  };
 
-    setIsLoading(true);
-    try {
-      const result = await ApiService.wakeOnLan(selectedDevice.mac);
+  const handleBackToMenu = () => {
+    setCurrentView(null);
+  };
 
-      if (result.success) {
-        Alert.alert(
-          'Success',
-          result.message || `Wake-on-LAN signal sent to ${selectedDevice.name}`,
+  const renderCurrentView = () => {
+    switch (currentView) {
+      case 'wol':
+        return (
+          <WakeOnLanView isDarkMode={isDarkMode} onBack={handleBackToMenu} />
         );
-      } else {
-        Alert.alert(
-          'Warning',
-          result.error ||
-            result.message ||
-            'Wake-on-LAN signal sent but status unknown',
+      case 'commands':
+        return (
+          <View style={styles.placeholderView}>
+            <TouchableOpacity
+              onPress={handleBackToMenu}
+              style={styles.backButton}
+            >
+              <Text style={[styles.backButtonText, { color: '#007AFF' }]}>
+                <Icon name="arrow-back" size={20} /> Back
+              </Text>
+            </TouchableOpacity>
+            <Text
+              style={[
+                styles.placeholderText,
+                { color: isDarkMode ? '#fff' : '#000' },
+              ]}
+            >
+              Commands functionality coming soon...
+            </Text>
+          </View>
         );
-      }
-    } catch (error) {
-      console.error('Wake-on-LAN failed:', error);
-      Alert.alert(
-        'Error',
-        'Failed to send Wake-on-LAN signal. Please try again.',
-      );
-    } finally {
-      setIsLoading(false);
+      case 'ping':
+        return (
+          <View style={styles.placeholderView}>
+            <TouchableOpacity
+              onPress={handleBackToMenu}
+              style={styles.backButton}
+            >
+              <Text style={[styles.backButtonText, { color: '#007AFF' }]}>
+                <Icon name="arrow-back" size={20} /> Back
+              </Text>
+            </TouchableOpacity>
+            <Text
+              style={[
+                styles.placeholderText,
+                { color: isDarkMode ? '#fff' : '#000' },
+              ]}
+            >
+              Ping functionality coming soon...
+            </Text>
+          </View>
+        );
+      case 'https-check':
+        return (
+          <View style={styles.placeholderView}>
+            <TouchableOpacity
+              onPress={handleBackToMenu}
+              style={styles.backButton}
+            >
+              <Text style={[styles.backButtonText, { color: '#007AFF' }]}>
+                <Icon name="arrow-back" size={20} /> Back
+              </Text>
+            </TouchableOpacity>
+            <Text
+              style={[
+                styles.placeholderText,
+                { color: isDarkMode ? '#fff' : '#000' },
+              ]}
+            >
+              HTTPS Check functionality coming soon...
+            </Text>
+          </View>
+        );
+      default:
+        return (
+          <MainMenu isDarkMode={isDarkMode} onMenuSelect={handleMenuSelect} />
+        );
     }
   };
   return (
@@ -115,11 +145,24 @@ function App(): React.JSX.Element {
       />
       <SafeAreaView style={[styles.container, backgroundStyle]}>
         <View style={styles.header}>
-          <Text style={[styles.title, { color: isDarkMode ? '#fff' : '#000' }]}>
-            Wake on LAN
-          </Text>
+          <View style={styles.headerTop}>
+            <Text
+              style={[styles.title, { color: isDarkMode ? '#fff' : '#000' }]}
+            >
+              {isAuthenticated ? 'Home' : 'Wake on LAN'}
+            </Text>
+            {isAuthenticated && (
+              <TouchableOpacity
+                style={styles.logoutButton}
+                onPress={logout}
+                disabled={isLoading}
+              >
+                <Icon name="logout" size={20} color="#FF3B30" />
+              </TouchableOpacity>
+            )}
+          </View>
           {isAuthenticated && (
-            <>
+            <View style={styles.statusContainer}>
               <StatusIndicator
                 keyExpiryTime={jwtTokenExpiryTime}
                 name="Authentication"
@@ -130,7 +173,7 @@ function App(): React.JSX.Element {
                 name="Server Public Key"
                 isDarkMode={isDarkMode}
               />
-            </>
+            </View>
           )}
         </View>
 
@@ -142,54 +185,7 @@ function App(): React.JSX.Element {
               isDarkMode={isDarkMode}
             />
           ) : (
-            <View style={styles.mainContent}>
-              <DeviceDropdown
-                devices={devices}
-                selectedDevice={selectedDevice}
-                onDeviceSelect={setSelectedDevice}
-                isDarkMode={isDarkMode}
-              />
-
-              <View style={styles.buttonContainer}>
-                <TouchableOpacity
-                  style={[styles.button, styles.refreshButton]}
-                  onPress={loadDevices}
-                  disabled={isLoading}
-                >
-                  <Text style={styles.refreshButtonText}>
-                    {isLoading ? 'Loading...' : 'Refresh Devices'}
-                  </Text>
-                </TouchableOpacity>
-              </View>
-
-              <View style={styles.buttonContainer}>
-                <TouchableOpacity
-                  style={[
-                    styles.button,
-                    styles.wakeButton,
-                    (!selectedDevice || isLoading) && styles.disabledButton,
-                  ]}
-                  onPress={handleWakeDevice}
-                  disabled={!selectedDevice || isLoading}
-                >
-                  <Text style={[styles.buttonText, styles.wakeButtonText]}>
-                    Wake Device
-                  </Text>
-                </TouchableOpacity>
-              </View>
-
-              <View style={styles.buttonContainer}>
-                <TouchableOpacity
-                  style={[styles.button, styles.logoutButton]}
-                  onPress={logout}
-                  disabled={isLoading}
-                >
-                  <Text style={[styles.buttonText, styles.logoutButtonText]}>
-                    Logout
-                  </Text>
-                </TouchableOpacity>
-              </View>
-            </View>
+            <View style={styles.mainContent}>{renderCurrentView()}</View>
           )}
         </View>
       </SafeAreaView>
@@ -202,13 +198,35 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   header: {
-    alignItems: 'center',
     paddingVertical: 20,
     borderBottomWidth: 1,
     borderBottomColor: '#e0e0e0',
   },
+  headerTop: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    marginBottom: 10,
+  },
   title: {
     fontSize: 24,
+    fontWeight: 'bold',
+  },
+  statusContainer: {
+    paddingHorizontal: 20,
+  },
+  logoutButton: {
+    padding: 8,
+    borderRadius: 20,
+    backgroundColor: 'transparent', // Remove red background
+    minWidth: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  logoutIcon: {
+    fontSize: 18,
+    color: '#FF3B30', // Make the icon red instead
     fontWeight: 'bold',
   },
   content: {
@@ -247,14 +265,24 @@ const styles = StyleSheet.create({
   wakeButtonText: {
     color: '#fff',
   },
-  logoutButton: {
-    backgroundColor: '#FF3B30',
-  },
-  logoutButtonText: {
-    color: '#fff',
-  },
   disabledButton: {
     backgroundColor: '#ccc',
+  },
+  placeholderView: {
+    flex: 1,
+    padding: 20,
+  },
+  backButton: {
+    marginBottom: 20,
+  },
+  backButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  placeholderText: {
+    fontSize: 18,
+    textAlign: 'center',
+    marginTop: 50,
   },
 });
 
