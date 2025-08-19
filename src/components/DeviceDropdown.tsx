@@ -32,17 +32,6 @@ const DeviceDropdown: React.FC<DeviceDropdownProps> = ({
   };
 
   const pickerStyle = {
-    inputIOS: {
-      fontSize: 16,
-      paddingVertical: 12,
-      paddingHorizontal: 16,
-      borderWidth: 1,
-      borderColor: isDarkMode ? '#555' : '#ddd',
-      borderRadius: 8,
-      color: isDarkMode ? '#fff' : '#000',
-      backgroundColor: isDarkMode ? '#333' : '#fff',
-      paddingRight: 30,
-    },
     inputAndroid: {
       fontSize: 16,
       paddingHorizontal: 16,
