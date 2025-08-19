@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { ApiService } from '../services/ApiService';
 import { KeystoreService } from '../services/KeystoreService';
 import { jwtDecode } from 'jwt-decode';
+import QuickCrypto from 'react-native-quick-crypto';
 
 export interface AuthState {
   isAuthenticated: boolean;
@@ -49,6 +50,13 @@ export const useAuth = (): AuthState => {
       setIsLoading(true);
       if (await KeystoreService.hasKeysStored()) {
         setIsAuthenticated(true);
+        const publicKey = QuickCrypto.createPublicKey(
+          (await KeystoreService.getPrivateKey()) as any as string,
+        );
+        console.log('Public Key:', publicKey);
+        ApiService.registerClientPublicKey(
+          publicKey.export({ type: 'spki', format: 'pem' }) as any as string,
+        );
         await getServerPublickeyInfo();
         await getJwtTokenInfo();
       } else {

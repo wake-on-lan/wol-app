@@ -153,11 +153,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  logoutIcon: {
-    fontSize: 18,
-    color: '#FF3B30', // Make the icon red instead
-    fontWeight: 'bold',
-  },
   content: {
     flex: 1,
   },

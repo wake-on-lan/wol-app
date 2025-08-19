@@ -25,6 +25,7 @@ export interface RegisterKeyResponse {
   id: number;
   expiresAt: string;
   isActive: boolean;
+  publicKeyPem: string;
   createdAt: string;
 }
 
@@ -32,6 +33,7 @@ export interface Device {
   name: string;
   mac: string;
   ip: string;
+  isBookmarked?: boolean;
 }
 
 export interface WakeOnLanDto {

@@ -1,7 +1,20 @@
-import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Alert, ActivityIndicator } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  Alert,
+  ActivityIndicator,
+  TextInput,
+  Modal,
+  Pressable,
+  FlatList,
+} from 'react-native';
+import Icon from 'react-native-vector-icons/MaterialIcons';
 import DeviceDropdown from './DeviceDropdown';
 import { ApiService, Device } from '../services/ApiService';
+import { BookmarkService } from '../services/BookmarkService';
 import { ERROR_MESSAGES } from '../utils/constants';
 
 interface WakeOnLanViewProps {
@@ -12,17 +25,71 @@ const WakeOnLanView: React.FC<WakeOnLanViewProps> = ({ isDarkMode }) => {
   const [devices, setDevices] = useState<Device[]>([]);
   const [selectedDevice, setSelectedDevice] = useState<Device | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [bookmarks, setBookmarks] = useState<Device[]>([]);
+  const [showBookmarks, setShowBookmarks] = useState(false);
 
-  const loadDevices = async () => {
+  useEffect(() => {
+    loadDevicesAndBookmarks();
+  }, []);
+
+  // New combined function
+  const loadDevicesAndBookmarks = async () => {
     try {
       setIsLoading(true);
+      await loadDevices();
+    } catch (error) {
+      console.error('Failed to load devices and bookmarks:', error);
+    } finally {
+      await loadBookmarkedDevices();
+      setIsLoading(false);
+    }
+  };
+
+  // Keep your existing loadDevices function
+  const loadDevices = async () => {
+    try {
       const deviceList = await ApiService.scanDevices();
       setDevices(deviceList);
     } catch (error) {
       console.error('Failed to load devices:', error);
       Alert.alert('Error', 'Failed to load devices. Please try again.');
-    } finally {
-      setIsLoading(false);
+      throw error; // Re-throw to handle in parent
+    }
+  };
+
+  // Fixed loadBookmarkedDevices function (you had a bug using 'devices' instead of 'fetchedBookmarks')
+  const loadBookmarkedDevices = async () => {
+    try {
+      const fetchedBookmarks = await BookmarkService.getBookmarks();
+      setBookmarks(fetchedBookmarks);
+      if (fetchedBookmarks.length === 0 && showBookmarks) {
+        setShowBookmarks(false);
+      }
+      // Update devices with bookmark status
+      setDevices(prevDevices =>
+        prevDevices.map(device => ({
+          ...device,
+          isBookmarked: fetchedBookmarks.some(b => b.mac === device.mac),
+        })),
+      );
+    } catch (error) {
+      console.error('Failed to load bookmarked devices:', error);
+      throw error; // Re-throw to handle in parent
+    }
+  };
+
+  const handleSelectBookmark = (device: Device) => {
+    setSelectedDevice(device);
+    setShowBookmarks(false);
+  };
+
+  const handleDeleteBookmark = async (deviceMac: string) => {
+    try {
+      await BookmarkService.removeBookmark(deviceMac);
+      await loadBookmarkedDevices();
+      Alert.alert('Success', 'Bookmark deleted successfully.');
+    } catch (error) {
+      Alert.alert('Error', 'Failed to delete bookmark.');
     }
   };
 
@@ -63,12 +130,13 @@ const WakeOnLanView: React.FC<WakeOnLanViewProps> = ({ isDarkMode }) => {
     }
   };
 
-
   if (isLoading) {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="#007AFF" />
-        <Text style={[styles.loadingText, { color: isDarkMode ? '#fff' : '#000' }]}>
+        <Text
+          style={[styles.loadingText, { color: isDarkMode ? '#fff' : '#000' }]}
+        >
           Loading devices...
         </Text>
       </View>
@@ -82,9 +150,22 @@ const WakeOnLanView: React.FC<WakeOnLanViewProps> = ({ isDarkMode }) => {
         selectedDevice={selectedDevice}
         onDeviceSelect={setSelectedDevice}
         isDarkMode={isDarkMode}
+        handleBookmarkToggle={async device => {
+          try {
+            if (device.isBookmarked) {
+              await BookmarkService.removeBookmark(device.mac);
+            } else {
+              await BookmarkService.saveBookmark(device);
+            }
+            await loadBookmarkedDevices();
+          } catch (error) {
+            console.error('Bookmark toggle failed:', error);
+            Alert.alert('Error', 'Failed to toggle bookmark.');
+          }
+        }}
       />
 
-      <View style={styles.buttonContainer}>
+      <View style={styles.buttonRow}>
         <TouchableOpacity
           style={[styles.button, styles.refreshButton]}
           onPress={loadDevices}
@@ -93,8 +174,30 @@ const WakeOnLanView: React.FC<WakeOnLanViewProps> = ({ isDarkMode }) => {
           {isLoading ? (
             <ActivityIndicator size="small" color="#fff" />
           ) : (
-            <Text style={styles.refreshButtonText}>Refresh Devices</Text>
+            <Text style={styles.refreshButtonText}>Refresh</Text>
           )}
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[
+            styles.button,
+            styles.bookmarkListButton,
+            bookmarks.length === 0 && styles.disabledButton,
+          ]}
+          onPress={() => setShowBookmarks(true)}
+          disabled={bookmarks.length === 0}
+        >
+          <View style={styles.buttonContent}>
+            <Icon
+              name="bookmark"
+              size={16}
+              color="#fff"
+              style={styles.buttonIcon}
+            />
+            <Text style={styles.bookmarkListButtonText}>
+              Bookmarks ({bookmarks.length})
+            </Text>
+          </View>
         </TouchableOpacity>
       </View>
 
@@ -113,6 +216,118 @@ const WakeOnLanView: React.FC<WakeOnLanViewProps> = ({ isDarkMode }) => {
           </Text>
         </TouchableOpacity>
       </View>
+
+      {/* Bookmarks Modal */}
+      <Modal
+        visible={showBookmarks}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => setShowBookmarks(false)}
+      >
+        <Pressable
+          style={styles.modalOverlay}
+          onPress={() => setShowBookmarks(false)}
+        >
+          <View
+            style={[
+              styles.modalContainer,
+              { backgroundColor: isDarkMode ? '#333' : '#fff' },
+            ]}
+          >
+            <View style={styles.modalHeader}>
+              <Text
+                style={[
+                  styles.modalTitle,
+                  { color: isDarkMode ? '#fff' : '#000' },
+                ]}
+              >
+                Bookmarked Devices
+              </Text>
+              <TouchableOpacity
+                style={styles.closeButton}
+                onPress={() => setShowBookmarks(false)}
+              >
+                <Icon
+                  name="close"
+                  size={24}
+                  color={isDarkMode ? '#fff' : '#000'}
+                />
+              </TouchableOpacity>
+            </View>
+
+            {bookmarks.length === 0 ? (
+              <View style={styles.emptyBookmarks}>
+                <Icon
+                  name="bookmark-border"
+                  size={48}
+                  color={isDarkMode ? '#555' : '#ccc'}
+                />
+                <Text
+                  style={[
+                    styles.emptyBookmarksText,
+                    { color: isDarkMode ? '#999' : '#666' },
+                  ]}
+                >
+                  No bookmarked devices yet
+                </Text>
+                <Text
+                  style={[
+                    styles.emptyBookmarksSubtext,
+                    { color: isDarkMode ? '#777' : '#999' },
+                  ]}
+                >
+                  Tap the star next to a device to bookmark it
+                </Text>
+              </View>
+            ) : (
+              <FlatList
+                data={bookmarks}
+                keyExtractor={item => item.mac}
+                style={styles.bookmarksList}
+                renderItem={({ item: bookmark }) => (
+                  <View
+                    style={[
+                      styles.bookmarkItem,
+                      {
+                        backgroundColor: isDarkMode ? '#444' : '#f9f9f9',
+                        borderBottomColor: isDarkMode ? '#555' : '#eee',
+                      },
+                    ]}
+                  >
+                    <TouchableOpacity
+                      style={styles.bookmarkContent}
+                      onPress={() => handleSelectBookmark(bookmark)}
+                    >
+                      <Text
+                        style={[
+                          styles.bookmarkName,
+                          { color: isDarkMode ? '#fff' : '#000' },
+                        ]}
+                      >
+                        {bookmark.name}
+                      </Text>
+                      <Text
+                        style={[
+                          styles.bookmarkDetails,
+                          { color: isDarkMode ? '#999' : '#666' },
+                        ]}
+                      >
+                        {bookmark.ip}
+                      </Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={styles.deleteBookmarkButton}
+                      onPress={() => handleDeleteBookmark(bookmark.mac)}
+                    >
+                      <Icon name="delete" size={20} color="#FF3B30" />
+                    </TouchableOpacity>
+                  </View>
+                )}
+              />
+            )}
+          </View>
+        </Pressable>
+      </Modal>
     </View>
   );
 };
@@ -139,6 +354,12 @@ const styles = StyleSheet.create({
   },
   buttonContainer: {
     marginTop: 20,
+  },
+  buttonRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 20,
+    gap: 10,
   },
   button: {
     paddingVertical: 15,
@@ -176,6 +397,114 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: 15,
     fontSize: 16,
+  },
+  bookmarkListButton: {
+    backgroundColor: '#FF9500',
+  },
+  bookmarkListButtonText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  addBookmarkButton: {
+    backgroundColor: '#FFD60A',
+  },
+  removeBookmarkButton: {
+    backgroundColor: '#FF9F0A',
+  },
+  bookmarkButtonText: {
+    color: '#000',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  modalContainer: {
+    width: '100%',
+    maxHeight: '80%',
+    borderRadius: 12,
+    overflow: 'hidden',
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#ddd',
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+  },
+  closeButton: {
+    padding: 5,
+  },
+  emptyBookmarks: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 40,
+    minHeight: 200,
+  },
+  emptyBookmarksText: {
+    fontSize: 18,
+    fontWeight: '500',
+    marginTop: 16,
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  emptyBookmarksSubtext: {
+    fontSize: 14,
+    textAlign: 'center',
+    lineHeight: 20,
+  },
+  bookmarksList: {
+    maxHeight: 400,
+  },
+  bookmarkItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderBottomWidth: 1,
+    borderRadius: 8,
+    marginBottom: 8,
+  },
+  bookmarkContent: {
+    flex: 1,
+  },
+  bookmarkName: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  bookmarkDetails: {
+    fontSize: 14,
+  },
+  deleteBookmarkButton: {
+    padding: 8,
+  },
+  buttonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  buttonIcon: {
+    marginRight: 8,
   },
 });
 
