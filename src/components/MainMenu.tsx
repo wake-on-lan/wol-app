@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import WakeOnLanView from './WakeOnLanView';
+import Icon from 'react-native-vector-icons/FontAwesome';
 
 interface isDarkModeProps {
   isDarkMode: boolean;
@@ -26,7 +27,9 @@ interface MenuItemProps {
 // Create placeholder components
 const CommandsView: React.FC<isDarkModeProps> = ({ isDarkMode }) => (
   <View style={styles.placeholderContainer}>
-    <Text style={[styles.placeholderText, { color: isDarkMode ? '#fff' : '#000' }]}>
+    <Text
+      style={[styles.placeholderText, { color: isDarkMode ? '#fff' : '#000' }]}
+    >
       Commands functionality coming soon...
     </Text>
   </View>
@@ -34,7 +37,9 @@ const CommandsView: React.FC<isDarkModeProps> = ({ isDarkMode }) => (
 
 const PingView: React.FC<isDarkModeProps> = ({ isDarkMode }) => (
   <View style={styles.placeholderContainer}>
-    <Text style={[styles.placeholderText, { color: isDarkMode ? '#fff' : '#000' }]}>
+    <Text
+      style={[styles.placeholderText, { color: isDarkMode ? '#fff' : '#000' }]}
+    >
       Ping functionality coming soon...
     </Text>
   </View>
@@ -42,7 +47,9 @@ const PingView: React.FC<isDarkModeProps> = ({ isDarkMode }) => (
 
 const HttpsCheckView: React.FC<isDarkModeProps> = ({ isDarkMode }) => (
   <View style={styles.placeholderContainer}>
-    <Text style={[styles.placeholderText, { color: isDarkMode ? '#fff' : '#000' }]}>
+    <Text
+      style={[styles.placeholderText, { color: isDarkMode ? '#fff' : '#000' }]}
+    >
       HTTPS Check functionality coming soon...
     </Text>
   </View>
@@ -75,7 +82,7 @@ const MenuItem: React.FC<MenuItemProps> = ({
 };
 
 const MainMenu: React.FC<MainMenuProps> = ({ isDarkMode, setTitle }) => {
-  const [ActiveComponent, setActiveComponent] = 
+  const [ActiveComponent, setActiveComponent] =
     React.useState<React.ComponentType<isDarkModeProps> | null>(null);
 
   const menuItems: MenuItem[] = [
@@ -115,11 +122,13 @@ const MainMenu: React.FC<MainMenuProps> = ({ isDarkMode, setTitle }) => {
     <View style={styles.container}>
       {ActiveComponent ? (
         <View style={styles.componentContainer}>
-          {/* Back button */}
-          <TouchableOpacity onPress={handleBackToMenu} style={styles.backButton}>
-            <Text style={[styles.backButtonText, { color: '#007AFF' }]}>← Back</Text>
+          <TouchableOpacity
+            onPress={handleBackToMenu}
+            style={styles.backButton}
+          >
+            <Icon name="long-arrow-left" size={35} color="#fff" />
           </TouchableOpacity>
-          
+
           {/* Render the active component */}
           <ActiveComponent isDarkMode={isDarkMode} />
         </View>

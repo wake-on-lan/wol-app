@@ -194,9 +194,7 @@ const WakeOnLanView: React.FC<WakeOnLanViewProps> = ({ isDarkMode }) => {
               color="#fff"
               style={styles.buttonIcon}
             />
-            <Text style={styles.bookmarkListButtonText}>
-              Bookmarks ({bookmarks.length})
-            </Text>
+            <Text style={styles.bookmarkListButtonText}>Bookmarks</Text>
           </View>
         </TouchableOpacity>
       </View>
@@ -255,31 +253,7 @@ const WakeOnLanView: React.FC<WakeOnLanViewProps> = ({ isDarkMode }) => {
               </TouchableOpacity>
             </View>
 
-            {bookmarks.length === 0 ? (
-              <View style={styles.emptyBookmarks}>
-                <Icon
-                  name="bookmark-border"
-                  size={48}
-                  color={isDarkMode ? '#555' : '#ccc'}
-                />
-                <Text
-                  style={[
-                    styles.emptyBookmarksText,
-                    { color: isDarkMode ? '#999' : '#666' },
-                  ]}
-                >
-                  No bookmarked devices yet
-                </Text>
-                <Text
-                  style={[
-                    styles.emptyBookmarksSubtext,
-                    { color: isDarkMode ? '#777' : '#999' },
-                  ]}
-                >
-                  Tap the star next to a device to bookmark it
-                </Text>
-              </View>
-            ) : (
+            {bookmarks.length !== 0 && (
               <FlatList
                 data={bookmarks}
                 keyExtractor={item => item.mac}
@@ -453,33 +427,16 @@ const styles = StyleSheet.create({
   closeButton: {
     padding: 5,
   },
-  emptyBookmarks: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 40,
-    minHeight: 200,
-  },
-  emptyBookmarksText: {
-    fontSize: 18,
-    fontWeight: '500',
-    marginTop: 16,
-    marginBottom: 8,
-    textAlign: 'center',
-  },
-  emptyBookmarksSubtext: {
-    fontSize: 14,
-    textAlign: 'center',
-    lineHeight: 20,
-  },
   bookmarksList: {
     maxHeight: 400,
+    marginVertical: 5,
   },
   bookmarkItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 16,
+    padding: 10,
+    marginHorizontal: 10,
+    marginVertical: 5,
     borderBottomWidth: 1,
     borderRadius: 8,
     marginBottom: 8,

@@ -39,12 +39,14 @@ const StatusIndicator: React.FC<StatusIndicatorProps> = ({
     const secondsUntilExpiry = Math.floor(
       (timeUntilExpiry % (1000 * 60)) / 1000,
     );
+    const paddedHours = hoursUntilExpiry.toString().padStart(2, '0');
+    const paddedMinutes = minutesUntilExpiry.toString().padStart(2, '0');
     const paddedSeconds = secondsUntilExpiry.toString().padStart(2, '0');
 
     if (hoursUntilExpiry > 0) {
-      return ` expires in ${hoursUntilExpiry}h ${minutesUntilExpiry}m ${paddedSeconds}s`;
+      return ` expires in ${paddedHours}h ${paddedMinutes}m ${paddedSeconds}s`;
     } else if (minutesUntilExpiry > 0) {
-      return ` expires in ${minutesUntilExpiry}m ${paddedSeconds}s`;
+      return ` expires in ${paddedMinutes}m ${paddedSeconds}s`;
     } else {
       return ` expires in ${paddedSeconds}s`;
     }
