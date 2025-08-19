@@ -9,7 +9,6 @@ export const API_CONFIG = {
 // Security Configuration
 export const SECURITY_CONFIG = {
   RSA_KEY_SIZE: 2048,
-  KEY_EXPIRY_HOURS: 24,
   AES_ALGORITHM: 'aes-256-cbc',
   RSA_PADDING: QuickCrypto.constants.RSA_PKCS1_OAEP_PADDING,
   RSA_OAEP_HASH: 'sha256',

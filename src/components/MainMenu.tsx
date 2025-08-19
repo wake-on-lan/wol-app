@@ -1,25 +1,55 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import WakeOnLanView from './WakeOnLanView';
 
-export type MenuOption = 'commands' | 'wol' | 'ping' | 'https-check';
+interface isDarkModeProps {
+  isDarkMode: boolean;
+}
 
 interface MainMenuProps {
   isDarkMode: boolean;
-  onMenuSelect: (option: MenuOption) => void;
+  setTitle: React.Dispatch<React.SetStateAction<string>>;
+}
+
+interface MenuItem {
+  title: string;
+  description: string;
+  component: React.ComponentType<isDarkModeProps>; // Changed this
 }
 
 interface MenuItemProps {
-  title: string;
-  description: string;
-  option: MenuOption;
+  menuItem: MenuItem;
   isDarkMode: boolean;
-  onPress: (option: MenuOption) => void;
+  onPress: (option: MenuItem) => void;
 }
 
+// Create placeholder components
+const CommandsView: React.FC<isDarkModeProps> = ({ isDarkMode }) => (
+  <View style={styles.placeholderContainer}>
+    <Text style={[styles.placeholderText, { color: isDarkMode ? '#fff' : '#000' }]}>
+      Commands functionality coming soon...
+    </Text>
+  </View>
+);
+
+const PingView: React.FC<isDarkModeProps> = ({ isDarkMode }) => (
+  <View style={styles.placeholderContainer}>
+    <Text style={[styles.placeholderText, { color: isDarkMode ? '#fff' : '#000' }]}>
+      Ping functionality coming soon...
+    </Text>
+  </View>
+);
+
+const HttpsCheckView: React.FC<isDarkModeProps> = ({ isDarkMode }) => (
+  <View style={styles.placeholderContainer}>
+    <Text style={[styles.placeholderText, { color: isDarkMode ? '#fff' : '#000' }]}>
+      HTTPS Check functionality coming soon...
+    </Text>
+  </View>
+);
+
 const MenuItem: React.FC<MenuItemProps> = ({
-  title,
-  description,
-  option,
+  menuItem,
   isDarkMode,
   onPress,
 }) => {
@@ -30,54 +60,79 @@ const MenuItem: React.FC<MenuItemProps> = ({
     <TouchableOpacity
       style={[
         styles.menuItem,
-        { backgroundColor: isDarkMode ? '#333' : '#f8f8f8' }
+        { backgroundColor: isDarkMode ? '#333' : '#f8f8f8' },
       ]}
-      onPress={() => onPress(option)}
+      onPress={() => onPress(menuItem)}
     >
-      <Text style={[styles.menuTitle, { color: textColor }]}>{title}</Text>
+      <Text style={[styles.menuTitle, { color: textColor }]}>
+        {menuItem.title}
+      </Text>
       <Text style={[styles.menuDescription, { color: descriptionColor }]}>
-        {description}
+        {menuItem.description}
       </Text>
     </TouchableOpacity>
   );
 };
 
-const MainMenu: React.FC<MainMenuProps> = ({ isDarkMode, onMenuSelect }) => {
-  const menuItems = [
+const MainMenu: React.FC<MainMenuProps> = ({ isDarkMode, setTitle }) => {
+  const [ActiveComponent, setActiveComponent] = 
+    React.useState<React.ComponentType<isDarkModeProps> | null>(null);
+
+  const menuItems: MenuItem[] = [
     {
       title: 'Commands',
       description: 'Execute custom commands on remote devices',
-      option: 'commands' as MenuOption,
+      component: CommandsView,
     },
     {
       title: 'Wake on LAN',
       description: 'Wake up devices on your network',
-      option: 'wol' as MenuOption,
+      component: WakeOnLanView,
     },
     {
       title: 'Ping',
       description: 'Check device connectivity and response times',
-      option: 'ping' as MenuOption,
+      component: PingView,
     },
     {
       title: 'HTTPS Check Availability',
       description: 'Test HTTPS endpoint availability and response',
-      option: 'https-check' as MenuOption,
+      component: HttpsCheckView,
     },
   ];
 
+  const handleMenuPress = (menuItem: MenuItem) => {
+    setActiveComponent(() => menuItem.component); // Use function to set component
+    setTitle(menuItem.title);
+  };
+
+  const handleBackToMenu = () => {
+    setActiveComponent(null);
+    setTitle('Home'); // Reset title
+  };
+
   return (
     <View style={styles.container}>
-      {menuItems.map((item, index) => (
-        <MenuItem
-          key={index}
-          title={item.title}
-          description={item.description}
-          option={item.option}
-          isDarkMode={isDarkMode}
-          onPress={onMenuSelect}
-        />
-      ))}
+      {ActiveComponent ? (
+        <View style={styles.componentContainer}>
+          {/* Back button */}
+          <TouchableOpacity onPress={handleBackToMenu} style={styles.backButton}>
+            <Text style={[styles.backButtonText, { color: '#007AFF' }]}>← Back</Text>
+          </TouchableOpacity>
+          
+          {/* Render the active component */}
+          <ActiveComponent isDarkMode={isDarkMode} />
+        </View>
+      ) : (
+        menuItems.map((item, index) => (
+          <MenuItem
+            key={index}
+            menuItem={item}
+            isDarkMode={isDarkMode}
+            onPress={handleMenuPress}
+          />
+        ))
+      )}
     </View>
   );
 };
@@ -108,6 +163,27 @@ const styles = StyleSheet.create({
   menuDescription: {
     fontSize: 14,
     lineHeight: 20,
+  },
+  componentContainer: {
+    flex: 1,
+  },
+  backButton: {
+    marginBottom: 20,
+    paddingVertical: 10,
+  },
+  backButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  placeholderContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  placeholderText: {
+    fontSize: 18,
+    textAlign: 'center',
   },
 });
 

@@ -20,14 +20,10 @@ export class KeystoreService {
 
       const privateKey = keyPair.privateKey as any as string;
 
-      const expiryTime = new Date();
-      expiryTime.setHours(
-        expiryTime.getHours() + SECURITY_CONFIG.KEY_EXPIRY_HOURS,
-      );
       await Keychain.setInternetCredentials(
         STORAGE_KEYS.PRIVATE_KEY,
         'private_key',
-        privateKey as any as string,
+        privateKey
       );
 
       return {
@@ -111,7 +107,7 @@ export class KeystoreService {
     const clearKey = async (alias: string) => {
       try {
         // Try to reset the credential
-        await (Keychain.resetInternetCredentials as any)(alias);
+        await Keychain.resetInternetCredentials({ server: alias });
       } catch (error) {
         // If reset fails, ignore since the key might not exist
         console.debug(`Key ${alias} cleared or didn't exist`);
@@ -131,12 +127,13 @@ export class KeystoreService {
 
   static async hasKeysStored(): Promise<boolean> {
     try {
-      const [privateKey, jwtToken] = await Promise.all([
+      const [privateKey, serverPublicKey, jwtToken] = await Promise.all([
         this.getPrivateKey(),
+        this.getServerPublicKey(),
         this.getJwtToken(),
       ]);
 
-      return !!(privateKey && jwtToken);
+      return !!(privateKey && jwtToken && serverPublicKey);
     } catch (error) {
       console.error('Failed to check key validity:', error);
       return false;

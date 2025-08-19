@@ -7,14 +7,14 @@ import {
   StatusBar,
   useColorScheme,
   TouchableOpacity,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 
 import LoginForm from 'src/components/LoginForm';
 import StatusIndicator from 'src/components/StatusIndicator';
-import MainMenu, { MenuOption } from 'src/components/MainMenu';
-import WakeOnLanView from 'src/components/WakeOnLanView';
+import MainMenu from 'src/components/MainMenu';
 import { useAuth } from 'src/hooks/useAuth';
 
 function App(): React.JSX.Element {
@@ -25,18 +25,19 @@ function App(): React.JSX.Element {
     logout,
     serverPublicKeyExpiryTime,
     jwtTokenExpiryTime,
+    isLoading: authLoading,
   } = useAuth();
-  const [currentView, setCurrentView] = useState<MenuOption | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-
+  const [title, setTitle] = useState('Wake on LAN');
   const backgroundStyle = {
     backgroundColor: isDarkMode ? '#1a1a1a' : '#f5f5f5',
   };
 
-  // Reset view when authentication changes
   useEffect(() => {
     if (!isAuthenticated) {
-      setCurrentView(null);
+      setTitle('Wake on LAN');
+    } else {
+      setTitle('Home');
     }
   }, [isAuthenticated]);
 
@@ -54,90 +55,16 @@ function App(): React.JSX.Element {
     }
   };
 
-  const handleMenuSelect = (option: MenuOption) => {
-    setCurrentView(option);
-  };
-
-  const handleBackToMenu = () => {
-    setCurrentView(null);
-  };
-
-  const renderCurrentView = () => {
-    switch (currentView) {
-      case 'wol':
-        return (
-          <WakeOnLanView isDarkMode={isDarkMode} onBack={handleBackToMenu} />
-        );
-      case 'commands':
-        return (
-          <View style={styles.placeholderView}>
-            <TouchableOpacity
-              onPress={handleBackToMenu}
-              style={styles.backButton}
-            >
-              <Text style={[styles.backButtonText, { color: '#007AFF' }]}>
-                <Icon name="arrow-back" size={20} /> Back
-              </Text>
-            </TouchableOpacity>
-            <Text
-              style={[
-                styles.placeholderText,
-                { color: isDarkMode ? '#fff' : '#000' },
-              ]}
-            >
-              Commands functionality coming soon...
-            </Text>
-          </View>
-        );
-      case 'ping':
-        return (
-          <View style={styles.placeholderView}>
-            <TouchableOpacity
-              onPress={handleBackToMenu}
-              style={styles.backButton}
-            >
-              <Text style={[styles.backButtonText, { color: '#007AFF' }]}>
-                <Icon name="arrow-back" size={20} /> Back
-              </Text>
-            </TouchableOpacity>
-            <Text
-              style={[
-                styles.placeholderText,
-                { color: isDarkMode ? '#fff' : '#000' },
-              ]}
-            >
-              Ping functionality coming soon...
-            </Text>
-          </View>
-        );
-      case 'https-check':
-        return (
-          <View style={styles.placeholderView}>
-            <TouchableOpacity
-              onPress={handleBackToMenu}
-              style={styles.backButton}
-            >
-              <Text style={[styles.backButtonText, { color: '#007AFF' }]}>
-                <Icon name="arrow-back" size={20} /> Back
-              </Text>
-            </TouchableOpacity>
-            <Text
-              style={[
-                styles.placeholderText,
-                { color: isDarkMode ? '#fff' : '#000' },
-              ]}
-            >
-              HTTPS Check functionality coming soon...
-            </Text>
-          </View>
-        );
-      default:
-        return (
-          <MainMenu isDarkMode={isDarkMode} onMenuSelect={handleMenuSelect} />
-        );
-    }
-  };
-  return (
+  return isLoading || authLoading ? (
+    <View style={styles.loadingContainer}>
+      <ActivityIndicator size="large" color="#007AFF" />
+      <Text
+        style={[styles.loadingText, { color: isDarkMode ? '#fff' : '#000' }]}
+      >
+        {'Loading...'}
+      </Text>
+    </View>
+  ) : (
     <SafeAreaProvider>
       <StatusBar
         barStyle={isDarkMode ? 'light-content' : 'dark-content'}
@@ -149,7 +76,7 @@ function App(): React.JSX.Element {
             <Text
               style={[styles.title, { color: isDarkMode ? '#fff' : '#000' }]}
             >
-              {isAuthenticated ? 'Home' : 'Wake on LAN'}
+              {title}
             </Text>
             {isAuthenticated && (
               <TouchableOpacity
@@ -179,13 +106,15 @@ function App(): React.JSX.Element {
 
         <View style={styles.content}>
           {!isAuthenticated ? (
-            <LoginForm
-              onLogin={handleLogin}
-              isLoading={isLoading}
-              isDarkMode={isDarkMode}
-            />
+            <View style={styles.contentCentered}>
+              <LoginForm
+                onLogin={handleLogin}
+                isLoading={isLoading}
+                isDarkMode={isDarkMode}
+              />
+            </View>
           ) : (
-            <View style={styles.mainContent}>{renderCurrentView()}</View>
+            <MainMenu isDarkMode={isDarkMode} setTitle={setTitle} />
           )}
         </View>
       </SafeAreaView>
@@ -231,11 +160,18 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
+  },
+  contentCentered: {
+    flex: 1,
     padding: 20,
     justifyContent: 'center',
   },
+  contentTop: {
+    flex: 1,
+    justifyContent: 'flex-start',
+  },
   mainContent: {
-    marginTop: 20,
+    flex: 1,
   },
   buttonContainer: {
     marginTop: 20,
@@ -283,6 +219,15 @@ const styles = StyleSheet.create({
     fontSize: 18,
     textAlign: 'center',
     marginTop: 50,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    marginTop: 15,
+    fontSize: 16,
   },
 });
 

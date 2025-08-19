@@ -1,15 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Alert, ActivityIndicator } from 'react-native';
 import DeviceDropdown from './DeviceDropdown';
 import { ApiService, Device } from '../services/ApiService';
 import { ERROR_MESSAGES } from '../utils/constants';
 
 interface WakeOnLanViewProps {
   isDarkMode: boolean;
-  onBack: () => void;
 }
 
-const WakeOnLanView: React.FC<WakeOnLanViewProps> = ({ isDarkMode, onBack }) => {
+const WakeOnLanView: React.FC<WakeOnLanViewProps> = ({ isDarkMode }) => {
   const [devices, setDevices] = useState<Device[]>([]);
   const [selectedDevice, setSelectedDevice] = useState<Device | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -68,54 +67,55 @@ const WakeOnLanView: React.FC<WakeOnLanViewProps> = ({ isDarkMode, onBack }) => 
     }
   };
 
-  const textColor = isDarkMode ? '#fff' : '#000';
+
+  if (isLoading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#007AFF" />
+        <Text style={[styles.loadingText, { color: isDarkMode ? '#fff' : '#000' }]}>
+          Loading devices...
+        </Text>
+      </View>
+    );
+  }
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={onBack} style={styles.backButton}>
-          <Text style={[styles.backButtonText, { color: '#007AFF' }]}>
-            ← Back
-          </Text>
+    <View style={styles.content}>
+      <DeviceDropdown
+        devices={devices}
+        selectedDevice={selectedDevice}
+        onDeviceSelect={setSelectedDevice}
+        isDarkMode={isDarkMode}
+      />
+
+      <View style={styles.buttonContainer}>
+        <TouchableOpacity
+          style={[styles.button, styles.refreshButton]}
+          onPress={loadDevices}
+          disabled={isLoading}
+        >
+          {isLoading ? (
+            <ActivityIndicator size="small" color="#fff" />
+          ) : (
+            <Text style={styles.refreshButtonText}>Refresh Devices</Text>
+          )}
         </TouchableOpacity>
-        <Text style={[styles.title, { color: textColor }]}>Wake on LAN</Text>
       </View>
 
-      <View style={styles.content}>
-        <DeviceDropdown
-          devices={devices}
-          selectedDevice={selectedDevice}
-          onDeviceSelect={setSelectedDevice}
-          isDarkMode={isDarkMode}
-        />
-
-        <View style={styles.buttonContainer}>
-          <TouchableOpacity
-            style={[styles.button, styles.refreshButton]}
-            onPress={loadDevices}
-            disabled={isLoading}
-          >
-            <Text style={styles.refreshButtonText}>
-              {isLoading ? 'Loading...' : 'Refresh Devices'}
-            </Text>
-          </TouchableOpacity>
-        </View>
-
-        <View style={styles.buttonContainer}>
-          <TouchableOpacity
-            style={[
-              styles.button,
-              styles.wakeButton,
-              (!selectedDevice || isLoading) && styles.disabledButton,
-            ]}
-            onPress={handleWakeDevice}
-            disabled={!selectedDevice || isLoading}
-          >
-            <Text style={[styles.buttonText, styles.wakeButtonText]}>
-              Wake Device
-            </Text>
-          </TouchableOpacity>
-        </View>
+      <View style={styles.buttonContainer}>
+        <TouchableOpacity
+          style={[
+            styles.button,
+            styles.wakeButton,
+            (!selectedDevice || isLoading) && styles.disabledButton,
+          ]}
+          onPress={handleWakeDevice}
+          disabled={!selectedDevice || isLoading}
+        >
+          <Text style={[styles.buttonText, styles.wakeButtonText]}>
+            Wake Device
+          </Text>
+        </TouchableOpacity>
       </View>
     </View>
   );
@@ -132,13 +132,6 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderBottomWidth: 1,
     borderBottomColor: '#e0e0e0',
-  },
-  backButton: {
-    marginRight: 15,
-  },
-  backButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
   },
   title: {
     fontSize: 20,
@@ -178,6 +171,15 @@ const styles = StyleSheet.create({
   },
   disabledButton: {
     backgroundColor: '#ccc',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    marginTop: 15,
+    fontSize: 16,
   },
 });
 
