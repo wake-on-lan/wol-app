@@ -4,10 +4,9 @@
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
     flake-utils.url = "github:numtide/flake-utils";
-    docker-flake.url = "path:./docker";
   };
 
-  outputs = { self, nixpkgs, flake-utils, docker-flake, ... }:
+  outputs = { self, nixpkgs, flake-utils, ... }:
     flake-utils.lib.eachDefaultSystem (system:
       let
         pkgs = import nixpkgs {
@@ -67,12 +66,6 @@
             echo "  ANDROID_HOME: $ANDROID_HOME"
             code .
           '';
-        };
-
-        # Expose Docker CI packages from the docker flake
-        packages = {
-          android-ci = docker-flake.packages.${system}.default;
-          push-docker = docker-flake.packages.${system}.push-docker;
         };
       });
 }
