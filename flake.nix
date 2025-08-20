@@ -1,10 +1,13 @@
 {
   description = "Claude Code development environment with auto VSCode launch";
+
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
     flake-utils.url = "github:numtide/flake-utils";
+    docker-flake.url = "path:./docker";
   };
-  outputs = { self, nixpkgs, flake-utils, ... }:
+
+  outputs = { self, nixpkgs, flake-utils, docker-flake, ... }:
     flake-utils.lib.eachDefaultSystem (system:
       let
         pkgs = import nixpkgs {
@@ -20,14 +23,14 @@
         androidComposition = pkgs.androidenv.composeAndroidPackages {
           cmdLineToolsVersion = "8.0";
           platformToolsVersion = "34.0.5";
-          buildToolsVersions =
-            [ "35.0.0" "36.0.0" ]; 
+          buildToolsVersions = [ "35.0.0" "36.0.0" ];
           platformVersions = [ "33" "35" "36" ];
           includeEmulator = false;
           includeSystemImages = false;
           includeSources = false;
           includeNDK = true;
-          ndkVersions = [ "27.1.12297006" "27.0.12077973" ];  # Matches your ndkVersion
+          ndkVersions =
+            [ "27.1.12297006" "27.0.12077973" ]; # Matches your ndkVersion
           useGoogleAPIs = false;
           cmakeVersions = [ "3.22.1" ];
         };
@@ -47,6 +50,7 @@
           ];
         };
       in {
+        # Development shell
         devShells.default = pkgs.mkShell {
           name = "claude-dev-shell";
           buildInputs = [ devEnv ];
@@ -63,6 +67,12 @@
             echo "  ANDROID_HOME: $ANDROID_HOME"
             code .
           '';
+        };
+
+        # Expose Docker CI packages from the docker flake
+        packages = {
+          android-ci = docker-flake.packages.${system}.default;
+          push-docker = docker-flake.packages.${system}.push-docker;
         };
       });
 }
