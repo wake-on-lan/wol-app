@@ -5,7 +5,7 @@ interface StatusIndicatorProps {
   keyExpiryTime: Date | null;
   isDarkMode: boolean;
   name?: string;
-  onTimeOut?: () => void;
+  onTimeOut?: () => Promise<void>;
 }
 
 const StatusIndicator: React.FC<StatusIndicatorProps> = ({
@@ -15,12 +15,12 @@ const StatusIndicator: React.FC<StatusIndicatorProps> = ({
   onTimeOut
 }) => {
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [isHandlingTimeout, setIsHandlingTimeout] = useState(false);
 
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentTime(new Date());
     }, 1000);
-
     return () => clearInterval(interval);
   }, []);
 
@@ -28,10 +28,21 @@ const StatusIndicator: React.FC<StatusIndicatorProps> = ({
     if (!keyExpiryTime) {
       return '';
     }
-    const timeUntilExpiry = keyExpiryTime.getTime() - currentTime.getTime();
 
+    const timeUntilExpiry = keyExpiryTime.getTime() - currentTime.getTime();
+    
     if (timeUntilExpiry <= 0) {
-      onTimeOut && onTimeOut();
+      if (isHandlingTimeout) {
+        return ' expired (refreshing...)';
+      }
+      
+      if (onTimeOut && !isHandlingTimeout) {
+        setIsHandlingTimeout(true);
+        onTimeOut().finally(() => {
+          setIsHandlingTimeout(false);
+        });
+      }
+      
       return ' expired';
     }
 
@@ -42,6 +53,7 @@ const StatusIndicator: React.FC<StatusIndicatorProps> = ({
     const secondsUntilExpiry = Math.floor(
       (timeUntilExpiry % (1000 * 60)) / 1000,
     );
+
     const paddedHours = hoursUntilExpiry.toString().padStart(2, '0');
     const paddedMinutes = minutesUntilExpiry.toString().padStart(2, '0');
     const paddedSeconds = secondsUntilExpiry.toString().padStart(2, '0');
@@ -61,16 +73,15 @@ const StatusIndicator: React.FC<StatusIndicatorProps> = ({
     }
 
     const timeUntilExpiry = keyExpiryTime.getTime() - currentTime.getTime();
-
+    
     if (timeUntilExpiry <= 0) {
-      return '#FF3B30'; // Red
+      return isHandlingTimeout ? '#FF9500' : '#FF3B30'; // Orange while refreshing, red if expired
     }
-
-    if (timeUntilExpiry <= 3600000) {
-      // Less than 1 hour
+    
+    if (timeUntilExpiry <= 3600000) { // Less than 1 hour
       return '#FF9500'; // Orange
     }
-
+    
     return '#34C759'; // Green
   };
 

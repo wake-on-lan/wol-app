@@ -17,6 +17,7 @@ import StatusIndicator from 'src/components/StatusIndicator';
 import MainMenu from 'src/components/MainMenu';
 import { useAuth } from 'src/hooks/useAuth';
 import { ApiService } from 'src/services/ApiService';
+import { KeystoreService } from 'src/services/KeystoreService';
 
 function App(): React.JSX.Element {
   const isDarkMode = useColorScheme() === 'dark';
@@ -99,8 +100,9 @@ function App(): React.JSX.Element {
               <StatusIndicator
                 keyExpiryTime={serverPublicKeyExpiryTime}
                 name="Server Public Key"
-                onTimeOut={() => {
-                  ApiService.getServerPublicKey();
+                onTimeOut={async () => {
+                  await KeystoreService.clearServerPublicKey();
+                  await ApiService.getServerPublicKey();
                 }}
                 isDarkMode={isDarkMode}
               />

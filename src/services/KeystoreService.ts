@@ -124,7 +124,15 @@ export class KeystoreService {
       console.error('Failed to clear keys:', error);
     }
   }
-
+  static async clearServerPublicKey(): Promise<void> {
+    try {
+      await Keychain.resetInternetCredentials({
+        server: STORAGE_KEYS.SERVER_PUBLIC_KEY,
+      });
+    } catch (error) {
+      console.error('Failed to clear server public key:', error);
+    }
+  }
   static async hasKeysStored(): Promise<boolean> {
     try {
       const [privateKey, serverPublicKey, jwtToken] = await Promise.all([
