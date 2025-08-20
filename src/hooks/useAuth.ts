@@ -11,6 +11,7 @@ export interface AuthState {
   serverPublicKeyExpiryTime: Date | null;
   jwtTokenExpiryTime: Date | null;
   isLoading: boolean;
+  refreshServerPublicKey: () => Promise<void>;
 }
 
 export const useAuth = (): AuthState => {
@@ -18,6 +19,13 @@ export const useAuth = (): AuthState => {
   const [jwtTokenExpiryTime, setJwtTokenExpiryTime] = useState<Date | null>(
     null,
   );
+  const refreshServerPublicKey = async () => {
+    await KeystoreService.clearServerPublicKey();
+    const key = await ApiService.getServerPublicKey();
+    // assume the API returns expiry, update state
+    setServerPublicKeyExpiryTime(new Date(key.expiresAt));
+  };
+
   const [serverPublicKeyExpiryTime, setServerPublicKeyExpiryTime] =
     useState<Date | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -122,6 +130,7 @@ export const useAuth = (): AuthState => {
     logout,
     jwtTokenExpiryTime,
     serverPublicKeyExpiryTime,
+    refreshServerPublicKey,
     isLoading,
   };
 };

@@ -28,9 +28,26 @@ function App(): React.JSX.Element {
     serverPublicKeyExpiryTime,
     jwtTokenExpiryTime,
     isLoading: authLoading,
+    refreshServerPublicKey,
   } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [title, setTitle] = useState('Wake on LAN');
+  const [refreshing, setRefreshing] = useState(false);
+
+  const handleRefreshPublicKey = async () => {
+    try {
+      setRefreshing(true);
+      await refreshServerPublicKey();
+    } catch (e: any) {
+      Alert.alert(
+        'Refresh Failed',
+        e?.message || 'Could not refresh the server public key.',
+      );
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
   const backgroundStyle = {
     backgroundColor: isDarkMode ? '#1a1a1a' : '#f5f5f5',
   };
@@ -81,13 +98,31 @@ function App(): React.JSX.Element {
               {title}
             </Text>
             {isAuthenticated && (
-              <TouchableOpacity
-                style={styles.logoutButton}
-                onPress={logout}
-                disabled={isLoading}
-              >
-                <Icon name="logout" size={20} color="#FF3B30" />
-              </TouchableOpacity>
+              <View style={{ flexDirection: 'row', gap: 12 }}>
+                <TouchableOpacity
+                  style={styles.iconButton}
+                  onPress={handleRefreshPublicKey}
+                  disabled={isLoading || refreshing}
+                  accessibilityLabel="Refresh server public key"
+                  accessibilityRole="button"
+                >
+                  {refreshing ? (
+                    <ActivityIndicator size="small" color="#34C759" />
+                  ) : (
+                    <Icon name="refresh" size={20} color="#34C759" />
+                  )}
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={styles.iconButton}
+                  onPress={logout}
+                  disabled={isLoading}
+                  accessibilityLabel="Logout"
+                  accessibilityRole="button"
+                >
+                  <Icon name="logout" size={20} color="#FF3B30" />
+                </TouchableOpacity>
+              </View>
             )}
           </View>
           {isAuthenticated && (
@@ -154,10 +189,10 @@ const styles = StyleSheet.create({
   statusContainer: {
     paddingHorizontal: 20,
   },
-  logoutButton: {
+  iconButton: {
     padding: 8,
     borderRadius: 20,
-    backgroundColor: 'transparent', // Remove red background
+    backgroundColor: 'transparent',
     minWidth: 40,
     alignItems: 'center',
     justifyContent: 'center',
