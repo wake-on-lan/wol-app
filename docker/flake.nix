@@ -23,13 +23,14 @@
           androidComposition = pkgs.androidenv.composeAndroidPackages {
             cmdLineToolsVersion = "8.0";
             platformToolsVersion = "34.0.5";
-            buildToolsVersions = [ "34.0.0" ];
-            platformVersions = [ "33" "34" ];
+            buildToolsVersions = [ "35.0.0" "36.0.0" ];
+            platformVersions = [ "33" "35" "36" ];
             includeEmulator = false;
             includeSystemImages = false;
             includeSources = false;
             includeNDK = true;
-            ndkVersions = [ "26.1.10909125" ];
+            ndkVersions =
+              [ "27.1.12297006" "27.0.12077973" ]; # Matches your ndkVersion
             useGoogleAPIs = false;
             cmakeVersions = [ "3.22.1" ];
           };
@@ -38,45 +39,21 @@
             name = "android-ci";
             tag = "latest";
             contents = with pkgs; [
-              bash
-              coreutils
-              findutils
-              gnugrep
-              gnused
-              gawk
-              git
-              nodejs_20
+              curl
+              jq
               yarn
               python3
-              unzip
-              cmake
-              openjdk17_headless
-              cacert
-              which
+              node-gyp
+              nodejs_20
+              claude-code
+              jdk21
               androidComposition.androidsdk
             ];
             config = {
               WorkingDir = "/workspace";
               Env = [
-                "NIX_SSL_CERT_FILE=${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt"
-                "JAVA_HOME=${pkgs.openjdk17_headless}/lib/openjdk"
-                "ANDROID_HOME=${androidComposition.androidsdk}/libexec/android-sdk"
-                "ANDROID_SDK_ROOT=${androidComposition.androidsdk}/libexec/android-sdk"
-                "ANDROID_NDK_HOME=${androidComposition.androidsdk}/libexec/android-sdk/ndk-bundle"
-                "NDK_HOME=${androidComposition.androidsdk}/libexec/android-sdk/ndk-bundle"
-                ("PATH=${pkgs.coreutils}/bin:${pkgs.findutils}/bin:${pkgs.gnugrep}/bin:${pkgs.gnused}/bin:${pkgs.gawk}/bin"
-                  + ":${pkgs.git}/bin:${pkgs.nodejs_20}/bin:${pkgs.yarn}/bin:${pkgs.python3}/bin:${pkgs.cmake}/bin:${pkgs.which}/bin"
-                  + ":${androidComposition.androidsdk}/libexec/android-sdk/platform-tools"
-                  + ":${androidComposition.androidsdk}/libexec/android-sdk/cmdline-tools/latest/bin"
-                  + ":${androidComposition.androidsdk}/libexec/android-sdk/build-tools/34.0.0"
-                  + ":${androidComposition.androidsdk}/libexec/android-sdk/ndk-bundle/toolchains/llvm/prebuilt/linux-x86_64/bin"
-                  + ":${androidComposition.androidsdk}/libexec/android-sdk/cmake/3.22.1/bin")
-                "GRADLE_OPTS=-Dorg.gradle.daemon=false -Dorg.gradle.jvmargs=-Xmx4g -Dfile.encoding=UTF-8 -Dorg.gradle.parallel=true"
-                "GRADLE_USER_HOME=/tmp/.gradle"
-                "CI=true"
-                "ANDROID_COMPILE_SDK=34"
-                "ANDROID_BUILD_TOOLS=34.0.0"
-                "ANDROID_SDK_TOOLS=34.0.5"
+                "ANDROID_HOME = ${androidComposition.androidsdk}/libexec/android-sdk"
+                "ANDROID_SDK_ROOT = ${androidComposition.androidsdk}/libexec/android-sdk"
               ];
             };
           };
@@ -132,7 +109,7 @@
         in {
           default = dockerImage;
           android-ci = dockerImage;
-          push-docker = pushScript; 
+          push-docker = pushScript;
         });
     };
 }
