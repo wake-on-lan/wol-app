@@ -43,26 +43,27 @@ const WakeOnLanView: React.FC<WakeOnLanViewProps> = ({ isDarkMode }) => {
   // New combined function
   const loadDevicesAndBookmarks = async () => {
     try {
-      setIsLoading(true);
       await loadDevices();
     } catch (error) {
       console.error('Failed to load devices and bookmarks:', error);
     } finally {
       await loadBookmarkedDevices();
-      setIsLoading(false);
     }
   };
 
   // Keep your existing loadDevices function
   const loadDevices = async () => {
     try {
+      setIsLoading(true);
       const deviceList = await ApiService.scanDevices();
       setDevices(deviceList);
     } catch (error) {
+      setIsLoading(false);
       console.error('Failed to load devices:', error);
       Alert.alert('Error', 'Failed to load devices. Please try again.');
       throw error; // Re-throw to handle in parent
     }
+    setIsLoading(false);
   };
 
   // Fixed loadBookmarkedDevices function (you had a bug using 'devices' instead of 'fetchedBookmarks')

@@ -40,29 +40,33 @@
             tag = "latest";
             created = "now";
             fromImage = pkgs.dockerTools.pullImage {
-              imageName = "alpine";
-              imageDigest = "sha256:4bcff63911fcb4448bd4fdacec207030997caf25e9bea4045fa6c8c44de311d1";
-              sha256 = "sha256-1Af8p6cYQs8sxlowz4BC6lC9eAOpNWYnIhCN7BSDKL0=";
+              imageName = "debian";
+              imageDigest =
+                "sha256:6d87375016340817ac2391e670971725a9981cfc24e221c47734681ed0f6c0f5";
+              sha256 = "sha256-44sfsrMrk9tHriniFIqv1JMXrfAJg2SZ9KAMq7TkrXo=";
+              finalImageTag = "bookworm-slim";
             };
 
             contents = with pkgs; [
               curl
               jq
+              coreutils
               gnused
               yarn
               python3
               node-gyp
               nodejs_20
               claude-code
-              jdk21
+              jdk17
               androidComposition.androidsdk
             ];
             config = {
               WorkingDir = "/workspace";
               Env = [
-                "JAVA_HOME = ${pkgs.jdk21}/lib/openjdk"
-                "ANDROID_HOME = ${androidComposition.androidsdk}/libexec/android-sdk"
-                "ANDROID_SDK_ROOT = ${androidComposition.androidsdk}/libexec/android-sdk"
+                "JAVA_HOME=${pkgs.jdk17}/lib/openjdk"
+                "PATH=/bin:/usr/bin:${pkgs.jdk17}/bin:${androidComposition.androidsdk}/libexec/android-sdk/platform-tools:${androidComposition.androidsdk}/libexec/android-sdk/tools/bin"
+                "ANDROID_HOME=${androidComposition.androidsdk}/libexec/android-sdk"
+                "ANDROID_SDK_ROOT=${androidComposition.androidsdk}/libexec/android-sdk"
               ];
             };
           };
