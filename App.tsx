@@ -95,6 +95,9 @@ function App(): React.JSX.Element {
               <StatusIndicator
                 keyExpiryTime={jwtTokenExpiryTime}
                 name="Authentication"
+                onTimeOut={async () => {
+                  await logout();
+                }}
                 isDarkMode={isDarkMode}
               />
               <StatusIndicator
