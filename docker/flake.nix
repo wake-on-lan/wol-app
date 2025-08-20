@@ -60,6 +60,7 @@
             config = {
               WorkingDir = "/workspace";
               Env = [
+                "JAVA_HOME = ${pkgs.jdk21}/lib/openjdk"
                 "ANDROID_HOME = ${androidComposition.androidsdk}/libexec/android-sdk"
                 "ANDROID_SDK_ROOT = ${androidComposition.androidsdk}/libexec/android-sdk"
               ];
