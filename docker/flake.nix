@@ -48,6 +48,7 @@
             contents = with pkgs; [
               curl
               jq
+              gnused
               yarn
               python3
               node-gyp

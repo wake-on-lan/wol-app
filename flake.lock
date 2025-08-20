@@ -6,7 +6,7 @@
       },
       "locked": {
         "lastModified": 1,
-        "narHash": "sha256-gv6J5SXjKSEnwb+JSWxXGFJThAySSCqTkxJa0bXWcIs=",
+        "narHash": "sha256-BOexBNfooSm1nADw5aQ6FBJmA3479dN2eTBva6BffCI=",
         "path": "./docker",
         "type": "path"
       },
