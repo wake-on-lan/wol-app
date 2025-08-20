@@ -4,13 +4,15 @@ import { View, Text, StyleSheet } from 'react-native';
 interface StatusIndicatorProps {
   keyExpiryTime: Date | null;
   isDarkMode: boolean;
-  name?: string; // Added optional name prop
+  name?: string;
+  onTimeOut?: () => void;
 }
 
 const StatusIndicator: React.FC<StatusIndicatorProps> = ({
   keyExpiryTime,
   isDarkMode,
   name,
+  onTimeOut
 }) => {
   const [currentTime, setCurrentTime] = useState(new Date());
 
@@ -29,6 +31,7 @@ const StatusIndicator: React.FC<StatusIndicatorProps> = ({
     const timeUntilExpiry = keyExpiryTime.getTime() - currentTime.getTime();
 
     if (timeUntilExpiry <= 0) {
+      onTimeOut && onTimeOut();
       return ' expired';
     }
 
