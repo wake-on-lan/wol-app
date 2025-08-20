@@ -70,6 +70,23 @@ export interface UpResult {
   reachable: boolean;
 }
 
+export interface ShellCommandDto {
+  host: string;
+  port: number;
+  user: string;
+  command: string;
+  password?: string;
+  privateKey?: string;
+}
+
+export interface ShellCommandResponse {
+  success: boolean;
+  command: string;
+  exitStatus: number;
+  message: string;
+  timestamp: string;
+}
+
 export class ApiService {
   private static readonly BASE_URL = API_CONFIG.BASE_URL;
 
@@ -238,6 +255,11 @@ export class ApiService {
       undefined,
       'GET',
     );
+  }
+
+  // Shell Command
+  static async sendShellCommand(shellCommand: ShellCommandDto): Promise<ShellCommandResponse> {
+    return this.makeEncryptedRequest('/commands/shell', shellCommand);
   }
 
   // Complete Authentication Flow

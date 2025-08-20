@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import WakeOnLanView from './WakeOnLanView';
 import PingView from './PingView';
 import HttpsCheckView from './HttpsCheckView';
+import CommandsView from './CommandsView';
 import Icon from 'react-native-vector-icons/FontAwesome';
 
 export interface isDarkModeProps {
@@ -26,16 +27,6 @@ interface MenuItemProps {
   onPress: (option: MenuItem) => void;
 }
 
-// Create placeholder components
-const CommandsView: React.FC<isDarkModeProps> = ({ isDarkMode }) => (
-  <View style={styles.placeholderContainer}>
-    <Text
-      style={[styles.placeholderText, { color: isDarkMode ? '#fff' : '#000' }]}
-    >
-      Commands functionality coming soon...
-    </Text>
-  </View>
-);
 
 
 

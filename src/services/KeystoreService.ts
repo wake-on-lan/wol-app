@@ -7,6 +7,13 @@ export interface KeyPair {
   privateKey: string;
 }
 
+export interface SavedPrivateKey {
+  id: string;
+  name: string;
+  privateKey: string;
+  createdAt: string;
+}
+
 export class KeystoreService {
   static async generateKeyPair(): Promise<KeyPair> {
     try {
@@ -145,6 +152,90 @@ export class KeystoreService {
     } catch (error) {
       console.error('Failed to check key validity:', error);
       return false;
+    }
+  }
+
+  // SSH Private Key Management
+  static async saveSSHPrivateKey(name: string, privateKey: string): Promise<string> {
+    try {
+      const keyId = Date.now().toString();
+      const savedKey: SavedPrivateKey = {
+        id: keyId,
+        name,
+        privateKey,
+        createdAt: new Date().toISOString(),
+      };
+
+      const storageKey = `${STORAGE_KEYS.SSH_PRIVATE_KEY_PREFIX}${keyId}`;
+      await Keychain.setInternetCredentials(
+        storageKey,
+        'ssh_private_key',
+        JSON.stringify(savedKey),
+      );
+
+      // Update the list of saved keys
+      const existingKeys = await this.getSSHPrivateKeyList();
+      const updatedKeys = [...existingKeys, { id: keyId, name, createdAt: savedKey.createdAt }];
+      
+      await Keychain.setInternetCredentials(
+        STORAGE_KEYS.SSH_PRIVATE_KEY_LIST,
+        'ssh_key_list',
+        JSON.stringify(updatedKeys),
+      );
+
+      return keyId;
+    } catch (error) {
+      throw new Error(`Failed to save SSH private key: ${error}`);
+    }
+  }
+
+  static async getSSHPrivateKey(keyId: string): Promise<SavedPrivateKey | null> {
+    try {
+      const storageKey = `${STORAGE_KEYS.SSH_PRIVATE_KEY_PREFIX}${keyId}`;
+      const credentials = await Keychain.getInternetCredentials(storageKey);
+      
+      if (credentials) {
+        return JSON.parse(credentials.password) as SavedPrivateKey;
+      }
+      return null;
+    } catch (error) {
+      console.error(`Failed to retrieve SSH private key ${keyId}:`, error);
+      return null;
+    }
+  }
+
+  static async getSSHPrivateKeyList(): Promise<Array<{id: string, name: string, createdAt: string}>> {
+    try {
+      const credentials = await Keychain.getInternetCredentials(
+        STORAGE_KEYS.SSH_PRIVATE_KEY_LIST,
+      );
+      
+      if (credentials) {
+        return JSON.parse(credentials.password);
+      }
+      return [];
+    } catch (error) {
+      console.error('Failed to retrieve SSH private key list:', error);
+      return [];
+    }
+  }
+
+  static async deleteSSHPrivateKey(keyId: string): Promise<void> {
+    try {
+      const storageKey = `${STORAGE_KEYS.SSH_PRIVATE_KEY_PREFIX}${keyId}`;
+      await Keychain.resetInternetCredentials({ server: storageKey });
+
+      // Update the list of saved keys
+      const existingKeys = await this.getSSHPrivateKeyList();
+      const updatedKeys = existingKeys.filter(key => key.id !== keyId);
+      
+      await Keychain.setInternetCredentials(
+        STORAGE_KEYS.SSH_PRIVATE_KEY_LIST,
+        'ssh_key_list',
+        JSON.stringify(updatedKeys),
+      );
+    } catch (error) {
+      console.error(`Failed to delete SSH private key ${keyId}:`, error);
     }
   }
 }

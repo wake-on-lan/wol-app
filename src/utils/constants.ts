@@ -19,6 +19,8 @@ export const STORAGE_KEYS = {
   PRIVATE_KEY: 'wol_app_private_key',
   SERVER_PUBLIC_KEY: 'wol_app_server_public_key',
   JWT_TOKEN: 'wol_app_jwt_token',
+  SSH_PRIVATE_KEY_PREFIX: 'wol_app_ssh_key_',
+  SSH_PRIVATE_KEY_LIST: 'wol_app_ssh_key_list',
 } as const;
 
 // Validation Patterns
