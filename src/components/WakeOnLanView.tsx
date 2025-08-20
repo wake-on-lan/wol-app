@@ -16,6 +16,7 @@ import DeviceDropdown from './DeviceDropdown';
 import { ApiService, Device } from '../services/ApiService';
 import { BookmarkService } from '../services/BookmarkService';
 import { ERROR_MESSAGES } from '../utils/constants';
+import ResultInfoBox from './ResultInfoBox';
 
 interface WakeOnLanViewProps {
   isDarkMode: boolean;
@@ -218,108 +219,36 @@ const WakeOnLanView: React.FC<WakeOnLanViewProps> = ({ isDarkMode }) => {
         </View>
       </View>
 
-      {/* Wake Results Section */}
       {wakeResult && (
-        <View
-          style={[
-            styles.resultContainer,
-            { backgroundColor: isDarkMode ? '#333' : '#f9f9f9' },
+        <ResultInfoBox
+          success={wakeResult.success}
+          title={
+            wakeResult.success
+              ? 'Packet Sent Successfully'
+              : 'Failed to Send Packet'
+          }
+          rows={[
+            {
+              label: 'Device',
+              value: wakeResult.device.name,
+            },
+            {
+              label: 'MAC Address',
+              value: wakeResult.device.mac,
+              monospace: true,
+              numberOfLines: 1,
+              ellipsizeMode: 'tail',
+            },
+            {
+              label: 'IP Address',
+              value: wakeResult.device.ip,
+              monospace: true,
+            },
           ]}
-        >
-          <View style={styles.resultHeader}>
-            <TouchableOpacity
-              style={[styles.clearButton]}
-              onPress={clearResults}
-            >
-              <Icon name="clear" style={{padding: 1}} size={20} color="#666" />
-            </TouchableOpacity>
-            <Icon
-              name={wakeResult.success ? 'check-circle' : 'cancel'}
-              size={24}
-              color={wakeResult.success ? '#34C759' : '#FF3B30'}
-            />
-            <Text
-              style={[
-                styles.resultTitle,
-                {
-                  color: wakeResult.success ? '#34C759' : '#FF3B30',
-                  marginLeft: 8,
-                },
-              ]}
-            >
-              {wakeResult.success
-                ? 'Packet Sent Successfully'
-                : 'Failed to Send Packet'}
-            </Text>
-          </View>
-
-            <View style={styles.deviceInfo}>
-              <View style={styles.resultRow}>
-                <Text
-                  style={[
-                    styles.resultLabel,
-                    { color: isDarkMode ? '#999' : '#666' },
-                  ]}
-                >
-                  Device:
-                </Text>
-                <Text
-                  style={[
-                    styles.resultValue,
-                    { color: isDarkMode ? '#fff' : '#000' },
-                  ]}
-                >
-                  {wakeResult.device.name}
-                </Text>
-              </View>
-
-              <View style={styles.resultRow}>
-                <Text
-                  style={[
-                    styles.resultLabel,
-                    { color: isDarkMode ? '#999' : '#666' },
-                  ]}
-                >
-                  MAC Address:
-                </Text>
-                <Text
-                  style={[
-                  styles.resultValue,
-                  {
-                    color: isDarkMode ? '#fff' : '#000',
-                    fontFamily: 'monospace',
-                  },
-                  ]}
-                  numberOfLines={1}
-                  ellipsizeMode="tail"
-                >
-                  {wakeResult.device.mac}
-                </Text>
-              </View>
-
-              <View style={styles.resultRow}>
-                <Text
-                  style={[
-                    styles.resultLabel,
-                    { color: isDarkMode ? '#999' : '#666' },
-                  ]}
-                >
-                  IP Address:
-                </Text>
-                <Text
-                  style={[
-                    styles.resultValue,
-                    {
-                      color: isDarkMode ? '#fff' : '#000',
-                      fontFamily: 'monospace',
-                    },
-                  ]}
-                >
-                  {wakeResult.device.ip}
-                </Text>
-              </View>
-            </View>
-        </View>
+          onClear={clearResults}
+          isDarkMode={isDarkMode}
+          testID="wake-result"
+        />
       )}
 
       {/* Bookmarks Modal */}
@@ -473,31 +402,11 @@ const styles = StyleSheet.create({
   disabledButton: {
     backgroundColor: '#ccc',
   },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  loadingText: {
-    marginTop: 15,
-    fontSize: 16,
-  },
   bookmarkListButton: {
     backgroundColor: '#FF9500',
   },
   bookmarkListButtonText: {
     color: '#fff',
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  addBookmarkButton: {
-    backgroundColor: '#FFD60A',
-  },
-  removeBookmarkButton: {
-    backgroundColor: '#FF9F0A',
-  },
-  bookmarkButtonText: {
-    color: '#000',
     fontSize: 14,
     fontWeight: '600',
   },
@@ -571,70 +480,6 @@ const styles = StyleSheet.create({
   },
   buttonIcon: {
     marginRight: 8,
-  },
-  clearButton: {
-    backgroundColor: 'transparent',
-    borderWidth: 2,
-    borderColor: '#666',
-    borderRadius: 25,
-    marginRight: 12,
-  },
-  resultContainer: {
-    borderRadius: 8,
-    padding: 16,
-    marginTop: 20,
-  },
-  resultHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  resultTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-  },
-  resultDetails: {
-    gap: 12,
-  },
-  deviceInfo: {
-    paddingBottom: 8,
-    marginBottom: 8,
-  },
-  resultRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 4,
-  },
-  resultLabel: {
-    fontSize: 14,
-    flex: 1,
-  },
-  resultValue: {
-    fontSize: 14,
-    fontWeight: '500',
-    flex: 1,
-  },
-  successMessage: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    backgroundColor: 'rgba(52, 199, 89, 0.1)',
-    padding: 12,
-    borderRadius: 6,
-    marginTop: 8,
-  },
-  failureMessage: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    backgroundColor: 'rgba(255, 149, 0, 0.1)',
-    padding: 12,
-    borderRadius: 6,
-    marginTop: 8,
-  },
-  infoText: {
-    fontSize: 12,
-    lineHeight: 16,
-    marginLeft: 6,
-    flex: 1,
   },
 });
 

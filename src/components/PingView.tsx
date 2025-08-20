@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { ApiService, PingResponse } from '../services/ApiService';
+import ResultInfoBox, { ResultRow } from './ResultInfoBox';
 
 interface PingViewProps {
   isDarkMode: boolean;
@@ -49,13 +50,13 @@ const PingView: React.FC<PingViewProps> = ({ isDarkMode }) => {
     setError(null);
   };
 
-  const formatTime = (time: number | "unknown"): string => {
-    if (time === "unknown") return "N/A";
+  const formatTime = (time: number | 'unknown'): string => {
+    if (time === 'unknown') return 'N/A';
     return `${time.toFixed(1)}ms`;
   };
 
   const formatPacketLoss = (packetLoss: string): string => {
-    return packetLoss === "unknown" ? "N/A" : `${packetLoss}%`;
+    return packetLoss === 'unknown' ? 'N/A' : `${packetLoss}%`;
   };
 
   return (
@@ -72,7 +73,7 @@ const PingView: React.FC<PingViewProps> = ({ isDarkMode }) => {
                 backgroundColor: isDarkMode ? '#333' : '#fff',
                 borderColor: isDarkMode ? '#555' : '#ddd',
                 color: isDarkMode ? '#fff' : '#000',
-              }
+              },
             ]}
             value={hostname}
             onChangeText={setHostname}
@@ -105,111 +106,66 @@ const PingView: React.FC<PingViewProps> = ({ isDarkMode }) => {
               </Text>
             </View>
           </TouchableOpacity>
-
-          {(pingResult || error) && (
-            <TouchableOpacity
-              style={[styles.button, styles.clearButton]}
-              onPress={clearResults}
-            >
-              <Icon name="clear" size={16} color="#666" />
-            </TouchableOpacity>
-          )}
         </View>
 
         {/* Results Section */}
-        {pingResult && (
-          <View style={[
-            styles.resultContainer,
-            { backgroundColor: isDarkMode ? '#333' : '#f9f9f9' }
-          ]}>
-            <View style={styles.resultHeader}>
-              <Icon 
-                name={pingResult.alive ? 'check-circle' : 'cancel'} 
-                size={24} 
-                color={pingResult.alive ? '#34C759' : '#FF3B30'} 
-              />
-              <Text style={[
-                styles.resultTitle,
-                { 
-                  color: pingResult.alive ? '#34C759' : '#FF3B30',
-                  marginLeft: 8,
+        {pingResult &&
+          (() => {
+            // Build rows dynamically based on ping result
+            const rows: ResultRow[] = [
+              {
+                label: 'Target',
+                value: pingResult.host,
+              },
+            ];
+
+            // Add IP if available
+            if (pingResult.numeric_host) {
+              rows.push({
+                label: 'IP',
+                value: pingResult.numeric_host,
+                monospace: true,
+              });
+            }
+
+            // Add alive-specific details
+            if (pingResult.alive) {
+              rows.push(
+                {
+                  label: 'Response Time',
+                  value: formatTime(pingResult.time),
+                },
+                {
+                  label: 'Average',
+                  value:
+                    pingResult.avg === 'unknown'
+                      ? 'N/A'
+                      : `${pingResult.avg}ms`,
+                },
+                {
+                  label: 'Packet Loss',
+                  value: formatPacketLoss(pingResult.packetLoss),
+                  valueStyle: {
+                    color:
+                      pingResult.packetLoss === '0.000' ? '#34C759' : '#FF9500',
+                  },
+                },
+              );
+            }
+
+            return (
+              <ResultInfoBox
+                success={pingResult.alive}
+                title={
+                  pingResult.alive ? 'Host is reachable' : 'Host is unreachable'
                 }
-              ]}>
-                {pingResult.alive ? 'Host is reachable' : 'Host is unreachable'}
-              </Text>
-            </View>
-
-            <View style={styles.resultDetails}>
-              <View style={styles.resultRow}>
-                <Text style={[styles.resultLabel, { color: isDarkMode ? '#999' : '#666' }]}>
-                  Target:
-                </Text>
-                <Text style={[styles.resultValue, { color: isDarkMode ? '#fff' : '#000' }]}>
-                  {pingResult.host}
-                </Text>
-              </View>
-
-              {pingResult.numeric_host && (
-                <View style={styles.resultRow}>
-                  <Text style={[styles.resultLabel, { color: isDarkMode ? '#999' : '#666' }]}>
-                    IP:
-                  </Text>
-                  <Text style={[styles.resultValue, { color: isDarkMode ? '#fff' : '#000' }]}>
-                    {pingResult.numeric_host}
-                  </Text>
-                </View>
-              )}
-
-              {pingResult.alive && (
-                <>
-                  <View style={styles.resultRow}>
-                    <Text style={[styles.resultLabel, { color: isDarkMode ? '#999' : '#666' }]}>
-                      Response Time:
-                    </Text>
-                    <Text style={[styles.resultValue, { color: isDarkMode ? '#fff' : '#000' }]}>
-                      {formatTime(pingResult.time)}
-                    </Text>
-                  </View>
-
-                  <View style={styles.resultRow}>
-                    <Text style={[styles.resultLabel, { color: isDarkMode ? '#999' : '#666' }]}>
-                      Average:
-                    </Text>
-                    <Text style={[styles.resultValue, { color: isDarkMode ? '#fff' : '#000' }]}>
-                      {pingResult.avg === "unknown" ? "N/A" : `${pingResult.avg}ms`}
-                    </Text>
-                  </View>
-
-                  <View style={styles.resultRow}>
-                    <Text style={[styles.resultLabel, { color: isDarkMode ? '#999' : '#666' }]}>
-                      Packet Loss:
-                    </Text>
-                    <Text style={[
-                      styles.resultValue, 
-                      { 
-                        color: pingResult.packetLoss === "0.000" ? '#34C759' : '#FF9500' 
-                      }
-                    ]}>
-                      {formatPacketLoss(pingResult.packetLoss)}
-                    </Text>
-                  </View>
-                </>
-              )}
-            </View>
-          </View>
-        )}
-
-        {error && (
-          <View style={[
-            styles.errorContainer,
-            { backgroundColor: isDarkMode ? '#4D1F1F' : '#FFEBEE' }
-          ]}>
-            <Icon name="error" size={20} color="#FF3B30" />
-            <Text style={[styles.errorText, { color: '#FF3B30' }]}>
-              {error}
-            </Text>
-          </View>
-        )}
+                onClear={clearResults}
+                rows={rows}
+                isDarkMode={isDarkMode}
+                testID="ping-result"
+              />
+            );
+          })()}
       </View>
     </ScrollView>
   );
@@ -253,13 +209,6 @@ const styles = StyleSheet.create({
   pingButton: {
     backgroundColor: '#007AFF',
     flex: 1,
-    marginRight: 12,
-  },
-  clearButton: {
-    backgroundColor: 'transparent',
-    borderWidth: 1,
-    borderColor: '#666',
-    paddingHorizontal: 12,
   },
   disabledButton: {
     backgroundColor: '#ccc',
@@ -273,51 +222,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     marginLeft: 8,
-  },
-  resultContainer: {
-    borderRadius: 8,
-    padding: 16,
-    marginBottom: 16,
-  },
-  resultHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  resultTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-  },
-  resultDetails: {
-    gap: 8,
-  },
-  resultRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 4,
-  },
-  resultLabel: {
-    fontSize: 14,
-    flex: 1,
-  },
-  resultValue: {
-    fontSize: 14,
-    fontWeight: '500',
-    textAlign: 'right',
-    flex: 1,
-  },
-  errorContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 12,
-    borderRadius: 8,
-    marginBottom: 16,
-  },
-  errorText: {
-    fontSize: 14,
-    marginLeft: 8,
-    flex: 1,
   },
 });
 
