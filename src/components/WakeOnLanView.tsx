@@ -27,6 +27,13 @@ const WakeOnLanView: React.FC<WakeOnLanViewProps> = ({ isDarkMode }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [bookmarks, setBookmarks] = useState<Device[]>([]);
   const [showBookmarks, setShowBookmarks] = useState(false);
+  const [sending, setSending] = useState(false);
+  const [wakeResult, setWakeResult] = useState<{
+    success: boolean;
+    device: Device;
+    message?: string;
+    error?: string;
+  } | null>(null);
 
   useEffect(() => {
     loadDevicesAndBookmarks();
@@ -102,46 +109,33 @@ const WakeOnLanView: React.FC<WakeOnLanViewProps> = ({ isDarkMode }) => {
       return;
     }
 
-    setIsLoading(true);
+    setSending(true);
+    setWakeResult(null);
+
     try {
       const result = await ApiService.wakeOnLan(selectedDevice.mac);
 
-      if (result.success) {
-        Alert.alert(
-          'Success',
-          result.message || `Wake-on-LAN signal sent to ${selectedDevice.name}`,
-        );
-      } else {
-        Alert.alert(
-          'Warning',
-          result.error ||
-            result.message ||
-            'Wake-on-LAN signal sent but status unknown',
-        );
-      }
+      setWakeResult({
+        success: result.success,
+        device: selectedDevice,
+        message: result.message,
+        error: result.error,
+      });
     } catch (error) {
       console.error('Wake-on-LAN failed:', error);
-      Alert.alert(
-        'Error',
-        'Failed to send Wake-on-LAN signal. Please try again.',
-      );
+      setWakeResult({
+        success: false,
+        device: selectedDevice,
+        error: 'Failed to send Wake-on-LAN signal. Please try again.',
+      });
     } finally {
-      setIsLoading(false);
+      setSending(false);
     }
   };
 
-  if (isLoading) {
-    return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#007AFF" />
-        <Text
-          style={[styles.loadingText, { color: isDarkMode ? '#fff' : '#000' }]}
-        >
-          Loading devices...
-        </Text>
-      </View>
-    );
-  }
+  const clearResults = () => {
+    setWakeResult(null);
+  };
 
   return (
     <View style={styles.content}>
@@ -200,20 +194,133 @@ const WakeOnLanView: React.FC<WakeOnLanViewProps> = ({ isDarkMode }) => {
       </View>
 
       <View style={styles.buttonContainer}>
-        <TouchableOpacity
-          style={[
-            styles.button,
-            styles.wakeButton,
-            (!selectedDevice || isLoading) && styles.disabledButton,
-          ]}
-          onPress={handleWakeDevice}
-          disabled={!selectedDevice || isLoading}
-        >
-          <Text style={[styles.buttonText, styles.wakeButtonText]}>
-            Wake Device
-          </Text>
-        </TouchableOpacity>
+        <View style={styles.buttonRow}>
+          <TouchableOpacity
+            style={[
+              styles.button,
+              styles.wakeButton,
+              (!selectedDevice || isLoading) && styles.disabledButton,
+            ]}
+            onPress={handleWakeDevice}
+            disabled={!selectedDevice || isLoading}
+          >
+            <View style={styles.buttonContent}>
+              {sending ? (
+                <ActivityIndicator size="small" color="#fff" />
+              ) : (
+                <Icon name="power-settings-new" size={25} color="#fff" />
+              )}
+              <Text style={[styles.buttonText, styles.wakeButtonText]}>
+                {sending ? 'Sending...' : 'Wake Device'}
+              </Text>
+            </View>
+          </TouchableOpacity>
+        </View>
       </View>
+
+      {/* Wake Results Section */}
+      {wakeResult && (
+        <View
+          style={[
+            styles.resultContainer,
+            { backgroundColor: isDarkMode ? '#333' : '#f9f9f9' },
+          ]}
+        >
+          <View style={styles.resultHeader}>
+            <TouchableOpacity
+              style={[styles.clearButton]}
+              onPress={clearResults}
+            >
+              <Icon name="clear" style={{padding: 1}} size={20} color="#666" />
+            </TouchableOpacity>
+            <Icon
+              name={wakeResult.success ? 'check-circle' : 'cancel'}
+              size={24}
+              color={wakeResult.success ? '#34C759' : '#FF3B30'}
+            />
+            <Text
+              style={[
+                styles.resultTitle,
+                {
+                  color: wakeResult.success ? '#34C759' : '#FF3B30',
+                  marginLeft: 8,
+                },
+              ]}
+            >
+              {wakeResult.success
+                ? 'Packet Sent Successfully'
+                : 'Failed to Send Packet'}
+            </Text>
+          </View>
+
+            <View style={styles.deviceInfo}>
+              <View style={styles.resultRow}>
+                <Text
+                  style={[
+                    styles.resultLabel,
+                    { color: isDarkMode ? '#999' : '#666' },
+                  ]}
+                >
+                  Device:
+                </Text>
+                <Text
+                  style={[
+                    styles.resultValue,
+                    { color: isDarkMode ? '#fff' : '#000' },
+                  ]}
+                >
+                  {wakeResult.device.name}
+                </Text>
+              </View>
+
+              <View style={styles.resultRow}>
+                <Text
+                  style={[
+                    styles.resultLabel,
+                    { color: isDarkMode ? '#999' : '#666' },
+                  ]}
+                >
+                  MAC Address:
+                </Text>
+                <Text
+                  style={[
+                  styles.resultValue,
+                  {
+                    color: isDarkMode ? '#fff' : '#000',
+                    fontFamily: 'monospace',
+                  },
+                  ]}
+                  numberOfLines={1}
+                  ellipsizeMode="tail"
+                >
+                  {wakeResult.device.mac}
+                </Text>
+              </View>
+
+              <View style={styles.resultRow}>
+                <Text
+                  style={[
+                    styles.resultLabel,
+                    { color: isDarkMode ? '#999' : '#666' },
+                  ]}
+                >
+                  IP Address:
+                </Text>
+                <Text
+                  style={[
+                    styles.resultValue,
+                    {
+                      color: isDarkMode ? '#fff' : '#000',
+                      fontFamily: 'monospace',
+                    },
+                  ]}
+                >
+                  {wakeResult.device.ip}
+                </Text>
+              </View>
+            </View>
+        </View>
+      )}
 
       {/* Bookmarks Modal */}
       <Modal
@@ -341,10 +448,13 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
+    flex: 1,
   },
   buttonText: {
+    color: '#fff',
     fontSize: 16,
     fontWeight: '600',
+    marginLeft: 8,
   },
   refreshButton: {
     backgroundColor: '#34C759',
@@ -458,10 +568,73 @@ const styles = StyleSheet.create({
   buttonContent: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
   },
   buttonIcon: {
     marginRight: 8,
+  },
+  clearButton: {
+    backgroundColor: 'transparent',
+    borderWidth: 2,
+    borderColor: '#666',
+    borderRadius: 25,
+    marginRight: 12,
+  },
+  resultContainer: {
+    borderRadius: 8,
+    padding: 16,
+    marginTop: 20,
+  },
+  resultHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  resultTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+  },
+  resultDetails: {
+    gap: 12,
+  },
+  deviceInfo: {
+    paddingBottom: 8,
+    marginBottom: 8,
+  },
+  resultRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 4,
+  },
+  resultLabel: {
+    fontSize: 14,
+    flex: 1,
+  },
+  resultValue: {
+    fontSize: 14,
+    fontWeight: '500',
+    flex: 1,
+  },
+  successMessage: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    backgroundColor: 'rgba(52, 199, 89, 0.1)',
+    padding: 12,
+    borderRadius: 6,
+    marginTop: 8,
+  },
+  failureMessage: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    backgroundColor: 'rgba(255, 149, 0, 0.1)',
+    padding: 12,
+    borderRadius: 6,
+    marginTop: 8,
+  },
+  infoText: {
+    fontSize: 12,
+    lineHeight: 16,
+    marginLeft: 6,
+    flex: 1,
   },
 });
 
