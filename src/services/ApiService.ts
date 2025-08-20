@@ -1,11 +1,11 @@
 import { KeystoreService } from './KeystoreService';
 import { CryptoService, EncryptedMessage } from './CryptoService';
 import { API_CONFIG } from '../utils/constants';
-import { KeyPairKey } from 'react-native-quick-crypto/lib/typescript/src/Cipher';
 
 export interface LoginDto {
   username: string;
   password: string;
+  publicKey?: string; // Optional for initial login, required for key registration
 }
 
 export interface LoginResponse {
@@ -104,7 +104,6 @@ export class ApiService {
           ...options.headers,
         },
       });
-
       if (!response.ok) {
         const errorText = await response.text();
         throw new Error(`API request failed: ${response.status} ${errorText}`);
@@ -147,6 +146,7 @@ export class ApiService {
     endpoint: string,
     payload?: any,
     method: string = 'POST',
+    makeAuthenticatedRequest = true,
   ): Promise<any> {
     const clientPrivateKey = await KeystoreService.getPrivateKey();
     if (!clientPrivateKey) {
@@ -162,10 +162,19 @@ export class ApiService {
         serverPublicKey,
       );
     }
-    const response = await this.makeAuthenticatedRequest(endpoint, {
-      method,
-      body: encryptedPayload ? JSON.stringify(encryptedPayload) : undefined,
-    });
+    let response: Response;
+    if (makeAuthenticatedRequest) {
+      response = await this.makeAuthenticatedRequest(endpoint, {
+        method,
+        body: encryptedPayload ? JSON.stringify(encryptedPayload) : undefined,
+      });
+    } else {
+      response = await this.makeRequest(endpoint, {
+        method,
+        body: encryptedPayload ? JSON.stringify(encryptedPayload) : undefined,
+      });
+    }
+
     const encryptedResponse = (await response.json()) as EncryptedMessage;
     return await CryptoService.decryptFromServer(
       encryptedResponse,
@@ -175,21 +184,21 @@ export class ApiService {
 
   // Authentication
   static async login(credentials: LoginDto): Promise<LoginResponse> {
-    const response = await this.makeRequest('/auth/login', {
-      method: 'POST',
-      body: JSON.stringify(credentials),
-    });
+    const response = await this.makeEncryptedRequest(
+      '/auth/login',
+      credentials,
+      'POST',
+      false, // No need for authenticated request here
+    );
 
-    const result = (await response.json()) as LoginResponse;
-    // Store JWT token
-    await KeystoreService.storeJwtToken(result.access_token);
+    await KeystoreService.storeJwtToken(response.access_token);
 
-    return result;
+    return response;
   }
 
   // Key Management
   static async getServerPublicKey(): Promise<ServerPublicKeyResponse> {
-    const response = await this.makeAuthenticatedRequest('/keys/server-public');
+    const response = await this.makeRequest('/keys/server-public');
     const result = (await response.json()) as ServerPublicKeyResponse;
 
     // Store server public key for encryption
@@ -252,14 +261,18 @@ export class ApiService {
 
   static async checkHttpsAvailability(hostname: string): Promise<UpResult> {
     return this.makeEncryptedRequest(
-      `/commands/checkHttpsAvailability?hostname=${encodeURIComponent(hostname)}`,
+      `/commands/checkHttpsAvailability?hostname=${encodeURIComponent(
+        hostname,
+      )}`,
       undefined,
       'GET',
     );
   }
 
   // Shell Command
-  static async sendShellCommand(shellCommand: ShellCommandDto): Promise<ShellCommandResponse> {
+  static async sendShellCommand(
+    shellCommand: ShellCommandDto,
+  ): Promise<ShellCommandResponse> {
     return this.makeEncryptedRequest('/commands/shell', shellCommand);
   }
 
@@ -269,15 +282,10 @@ export class ApiService {
     password: string,
   ): Promise<void> {
     try {
-      // 1. Login and get JWT
-      await this.login({ username, password });
-      // 2. Get server public key
       await this.getServerPublicKey();
 
-      // // 3. Generate client key pair
       const keyPair = await KeystoreService.generateKeyPair();
-      // // 4. Register client public key with server
-      await this.registerClientPublicKey(keyPair.publicKey);
+      await this.login({ username, password, publicKey: keyPair.publicKey });
     } catch (error) {
       // Clean up on failure
       await KeystoreService.clearAllKeys();

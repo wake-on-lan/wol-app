@@ -1,0 +1,30 @@
+stages:
+  - build
+
+variables:
+  BASE_URL: "http://git.neupengasse.mooo.com:3500"
+
+android-release:
+  stage: build
+  tags:
+    - linux
+  only:
+    - /^v\d+\.\d+\.\d+$/
+  image: openjdk:11-jdk
+  before_script:
+    - apt-get update -qq && apt-get install -y -qq wget unzip
+    - wget -q https://dl.google.com/android/repository/commandlinetools-linux-8512546_latest.zip
+    - unzip -q commandlinetools-linux-8512546_latest.zip
+    - mkdir -p $HOME/android-sdk/cmdline-tools
+    - mv cmdline-tools $HOME/android-sdk/cmdline-tools/latest
+    - export ANDROID_SDK_ROOT=$HOME/android-sdk
+    - export PATH=$PATH:$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$ANDROID_SDK_ROOT/platform-tools
+    - yes | sdkmanager --licenses
+    - sdkmanager "platforms;android-33" "build-tools;33.0.0"
+    - chmod +x ./gradlew
+  script:
+    - ./gradlew assembleRelease
+  artifacts:
+    paths:
+      - app/build/outputs/apk/release/*.apk
+    expire_in: 1 week
