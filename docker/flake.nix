@@ -38,6 +38,13 @@
           dockerImage = pkgs.dockerTools.buildLayeredImage {
             name = "android-ci";
             tag = "latest";
+            created = "now";
+            fromImage = pkgs.dockerTools.pullImage {
+              imageName = "alpine";
+              imageDigest = "sha256:4bcff63911fcb4448bd4fdacec207030997caf25e9bea4045fa6c8c44de311d1";
+              sha256 = "sha256-1Af8p6cYQs8sxlowz4BC6lC9eAOpNWYnIhCN7BSDKL0=";
+            };
+
             contents = with pkgs; [
               curl
               jq

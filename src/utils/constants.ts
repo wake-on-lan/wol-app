@@ -2,7 +2,7 @@ import QuickCrypto from "react-native-quick-crypto";
 
 // API Configuration
 export const API_CONFIG = {
-  BASE_URL: 'http://gandalf.lan:3000', // Update this to your backend URL
+  BASE_URL: 'http://gandalf.lan:3000',
   TIMEOUT: 30000, // 30 seconds
 };
 
