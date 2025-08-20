@@ -1,9 +1,11 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import WakeOnLanView from './WakeOnLanView';
+import PingView from './PingView';
+import HttpsCheckView from './HttpsCheckView';
 import Icon from 'react-native-vector-icons/FontAwesome';
 
-interface isDarkModeProps {
+export interface isDarkModeProps {
   isDarkMode: boolean;
 }
 
@@ -35,25 +37,7 @@ const CommandsView: React.FC<isDarkModeProps> = ({ isDarkMode }) => (
   </View>
 );
 
-const PingView: React.FC<isDarkModeProps> = ({ isDarkMode }) => (
-  <View style={styles.placeholderContainer}>
-    <Text
-      style={[styles.placeholderText, { color: isDarkMode ? '#fff' : '#000' }]}
-    >
-      Ping functionality coming soon...
-    </Text>
-  </View>
-);
 
-const HttpsCheckView: React.FC<isDarkModeProps> = ({ isDarkMode }) => (
-  <View style={styles.placeholderContainer}>
-    <Text
-      style={[styles.placeholderText, { color: isDarkMode ? '#fff' : '#000' }]}
-    >
-      HTTPS Check functionality coming soon...
-    </Text>
-  </View>
-);
 
 const MenuItem: React.FC<MenuItemProps> = ({
   menuItem,

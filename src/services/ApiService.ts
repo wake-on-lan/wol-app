@@ -50,6 +50,26 @@ export interface WakeOnLanResponse {
   error?: string;
 }
 
+export interface PingResponse {
+  inputHost: string;
+  host: string;
+  numeric_host?: string;
+  alive: boolean;
+  output: string;
+  time: number | 'unknown';
+  times: number[];
+  min: string;
+  max: string;
+  avg: string;
+  stddev: string;
+  packetLoss: string;
+}
+
+export interface UpResult {
+  hostname: string;
+  reachable: boolean;
+}
+
 export class ApiService {
   private static readonly BASE_URL = API_CONFIG.BASE_URL;
 
@@ -116,9 +136,10 @@ export class ApiService {
       throw new Error('Missing encryption keys');
     }
     let encryptedPayload: EncryptedMessage | undefined;
-    const serverPublicKey =
-      payload && (await KeystoreService.getServerPublicKey());
     if (payload) {
+      const serverPublicKey =
+        (await KeystoreService.getServerPublicKey()) as any as string;
+
       encryptedPayload = await CryptoService.encryptForServer(
         payload,
         serverPublicKey,
@@ -191,6 +212,15 @@ export class ApiService {
     return this.makeEncryptedRequest('/commands/wake-on-lan', payload);
   }
 
+  // Ping
+  static async ping(hostname: string): Promise<PingResponse> {
+    return this.makeEncryptedRequest(
+      `/commands/ping?hostname=${encodeURIComponent(hostname)}`,
+      undefined,
+      'GET',
+    );
+  }
+
   // Health Check
   static async checkDeviceStatus(
     hostname: string,
@@ -202,13 +232,9 @@ export class ApiService {
     );
   }
 
-  static async checkHttpsAvailability(
-    hostname: string,
-  ): Promise<{ hostname: string; reachable: boolean }> {
+  static async checkHttpsAvailability(hostname: string): Promise<UpResult> {
     return this.makeEncryptedRequest(
-      `/commands/checkHttpsAvailability?hostname=${encodeURIComponent(
-        hostname,
-      )}`,
+      `/commands/checkHttpsAvailability?hostname=${encodeURIComponent(hostname)}`,
       undefined,
       'GET',
     );
