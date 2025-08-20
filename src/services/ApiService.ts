@@ -193,6 +193,7 @@ export class ApiService {
     const result = (await response.json()) as ServerPublicKeyResponse;
 
     // Store server public key for encryption
+    await KeystoreService.clearServerPublicKey();
     await KeystoreService.storeServerPublicKey(result.publicKey);
 
     return result;
