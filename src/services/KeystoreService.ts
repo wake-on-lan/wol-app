@@ -155,8 +155,10 @@ export class KeystoreService {
     }
   }
 
-  // SSH Private Key Management
-  static async saveSSHPrivateKey(name: string, privateKey: string): Promise<string> {
+  static async saveSSHPrivateKey(
+    name: string,
+    privateKey: string,
+  ): Promise<string> {
     try {
       const keyId = Date.now().toString();
       const savedKey: SavedPrivateKey = {
@@ -167,20 +169,29 @@ export class KeystoreService {
       };
 
       const storageKey = `${STORAGE_KEYS.SSH_PRIVATE_KEY_PREFIX}${keyId}`;
-      await Keychain.setInternetCredentials(
-        storageKey,
+
+      await Keychain.setGenericPassword(
         'ssh_private_key',
         JSON.stringify(savedKey),
+        {
+          service: storageKey,
+          accessControl:
+            Keychain.ACCESS_CONTROL.BIOMETRY_ANY_OR_DEVICE_PASSCODE,
+          accessible: Keychain.ACCESSIBLE.WHEN_UNLOCKED_THIS_DEVICE_ONLY,
+        },
       );
 
-      // Update the list of saved keys
+      // Update the list of saved keys (metadata only, no private key)
       const existingKeys = await this.getSSHPrivateKeyList();
-      const updatedKeys = [...existingKeys, { id: keyId, name, createdAt: savedKey.createdAt }];
-      
-      await Keychain.setInternetCredentials(
-        STORAGE_KEYS.SSH_PRIVATE_KEY_LIST,
+      const updatedKeys = [
+        ...existingKeys,
+        { id: keyId, name, createdAt: savedKey.createdAt },
+      ];
+
+      await Keychain.setGenericPassword(
         'ssh_key_list',
         JSON.stringify(updatedKeys),
+        { service: STORAGE_KEYS.SSH_PRIVATE_KEY_LIST },
       );
 
       return keyId;
@@ -189,11 +200,21 @@ export class KeystoreService {
     }
   }
 
-  static async getSSHPrivateKey(keyId: string): Promise<SavedPrivateKey | null> {
+  static async getSSHPrivateKey(
+    keyId: string,
+  ): Promise<SavedPrivateKey | null> {
     try {
       const storageKey = `${STORAGE_KEYS.SSH_PRIVATE_KEY_PREFIX}${keyId}`;
-      const credentials = await Keychain.getInternetCredentials(storageKey);
-      
+      const credentials = await Keychain.getGenericPassword({
+        service: storageKey,
+        authenticationPrompt: {
+          title: 'Authenticate to access private key',
+          subtitle: 'Biometric or device passcode required',
+          description: 'Please verify your identity',
+          cancel: 'Cancel',
+        },
+      });
+
       if (credentials) {
         return JSON.parse(credentials.password) as SavedPrivateKey;
       }
@@ -204,12 +225,14 @@ export class KeystoreService {
     }
   }
 
-  static async getSSHPrivateKeyList(): Promise<Array<{id: string, name: string, createdAt: string}>> {
+  static async getSSHPrivateKeyList(): Promise<
+    Array<{ id: string; name: string; createdAt: string }>
+  > {
     try {
-      const credentials = await Keychain.getInternetCredentials(
-        STORAGE_KEYS.SSH_PRIVATE_KEY_LIST,
-      );
-      
+      const credentials = await Keychain.getGenericPassword({
+        service: STORAGE_KEYS.SSH_PRIVATE_KEY_LIST,
+      });
+
       if (credentials) {
         return JSON.parse(credentials.password);
       }
@@ -219,20 +242,19 @@ export class KeystoreService {
       return [];
     }
   }
-
   static async deleteSSHPrivateKey(keyId: string): Promise<void> {
     try {
       const storageKey = `${STORAGE_KEYS.SSH_PRIVATE_KEY_PREFIX}${keyId}`;
-      await Keychain.resetInternetCredentials({ server: storageKey });
+      await Keychain.resetGenericPassword({ service: storageKey });
 
-      // Update the list of saved keys
+      // Update list
       const existingKeys = await this.getSSHPrivateKeyList();
       const updatedKeys = existingKeys.filter(key => key.id !== keyId);
-      
-      await Keychain.setInternetCredentials(
-        STORAGE_KEYS.SSH_PRIVATE_KEY_LIST,
+
+      await Keychain.setGenericPassword(
         'ssh_key_list',
         JSON.stringify(updatedKeys),
+        { service: STORAGE_KEYS.SSH_PRIVATE_KEY_LIST },
       );
     } catch (error) {
       console.error(`Failed to delete SSH private key ${keyId}:`, error);
