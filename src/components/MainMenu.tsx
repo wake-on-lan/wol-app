@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, BackHandler } from 'react-native';
 import WakeOnLanView from './WakeOnLanView';
 import PingView from './PingView';
 import HttpsCheckView from './HttpsCheckView';
@@ -90,8 +90,22 @@ const MainMenu: React.FC<MainMenuProps> = ({ isDarkMode, setTitle }) => {
 
   const handleBackToMenu = () => {
     setActiveComponent(null);
-    setTitle('Home'); // Reset title
+    setTitle('Home');
   };
+
+  React.useEffect(() => {
+    const backAction = () => {
+      if (ActiveComponent) {
+        handleBackToMenu();
+        return true;
+      }
+      return false;
+    };
+
+    const backHandler = BackHandler.addEventListener('hardwareBackPress', backAction);
+
+    return () => backHandler.remove();
+  }, [ActiveComponent]);
 
   return (
     <View style={styles.container}>
