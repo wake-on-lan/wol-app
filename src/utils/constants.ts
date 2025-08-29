@@ -1,4 +1,4 @@
-import QuickCrypto from "react-native-quick-crypto";
+import QuickCrypto from 'react-native-quick-crypto';
 
 // API Configuration
 export const API_CONFIG = {
@@ -33,7 +33,8 @@ export const VALIDATION = {
 // Error Messages
 export const ERROR_MESSAGES = {
   NETWORK_ERROR: 'Network error. Please check your connection.',
-  AUTHENTICATION_FAILED: 'Authentication failed. Please check your credentials.',
+  AUTHENTICATION_FAILED:
+    'Authentication failed. Please check your credentials.',
   KEY_GENERATION_FAILED: 'Failed to generate encryption keys.',
   ENCRYPTION_FAILED: 'Failed to encrypt data.',
   DECRYPTION_FAILED: 'Failed to decrypt response.',

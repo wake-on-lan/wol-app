@@ -75,5 +75,6 @@ yarn-error.log
 !.yarn/versions
 
 result
-result/
-result-*
+.claude/
+.bundle/
+.yarn/

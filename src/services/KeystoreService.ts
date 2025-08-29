@@ -159,45 +159,47 @@ export class KeystoreService {
     name: string,
     privateKey: string,
   ): Promise<string> {
-    try {
-      const keyId = Date.now().toString();
-      const savedKey: SavedPrivateKey = {
-        id: keyId,
-        name,
-        privateKey,
-        createdAt: new Date().toISOString(),
-      };
+    const existingKeys = await this.getSSHPrivateKeyList();
 
-      const storageKey = `${STORAGE_KEYS.SSH_PRIVATE_KEY_PREFIX}${keyId}`;
+    const keyId = Date.now().toString();
 
-      await Keychain.setGenericPassword(
-        'ssh_private_key',
-        JSON.stringify(savedKey),
-        {
-          service: storageKey,
-          accessControl:
-            Keychain.ACCESS_CONTROL.BIOMETRY_ANY_OR_DEVICE_PASSCODE,
-          accessible: Keychain.ACCESSIBLE.WHEN_UNLOCKED_THIS_DEVICE_ONLY,
-        },
-      );
-
-      // Update the list of saved keys (metadata only, no private key)
-      const existingKeys = await this.getSSHPrivateKeyList();
-      const updatedKeys = [
-        ...existingKeys,
-        { id: keyId, name, createdAt: savedKey.createdAt },
-      ];
-
-      await Keychain.setGenericPassword(
-        'ssh_key_list',
-        JSON.stringify(updatedKeys),
-        { service: STORAGE_KEYS.SSH_PRIVATE_KEY_LIST },
-      );
-
-      return keyId;
-    } catch (error) {
-      throw new Error(`Failed to save SSH private key: ${error}`);
+    const duplicate = existingKeys.find(key => key.name === name);
+    if (duplicate) {
+      throw new Error(`SSH private key with name "${name}" already exists`);
     }
+
+    const savedKey: SavedPrivateKey = {
+      id: keyId,
+      name,
+      privateKey,
+      createdAt: new Date().toISOString(),
+    };
+
+    const storageKey = `${STORAGE_KEYS.SSH_PRIVATE_KEY_PREFIX}${keyId}`;
+
+    await Keychain.setGenericPassword(
+      'ssh_private_key',
+      JSON.stringify(savedKey),
+      {
+        service: storageKey,
+        accessControl: Keychain.ACCESS_CONTROL.BIOMETRY_ANY_OR_DEVICE_PASSCODE,
+        accessible: Keychain.ACCESSIBLE.WHEN_UNLOCKED_THIS_DEVICE_ONLY,
+      },
+    );
+
+    // Update the list of saved keys (metadata only, no private key)
+    const updatedKeys = [
+      ...existingKeys,
+      { id: keyId, name, createdAt: savedKey.createdAt },
+    ];
+
+    await Keychain.setGenericPassword(
+      'ssh_key_list',
+      JSON.stringify(updatedKeys),
+      { service: STORAGE_KEYS.SSH_PRIVATE_KEY_LIST },
+    );
+
+    return keyId;
   }
 
   static async getSSHPrivateKey(
